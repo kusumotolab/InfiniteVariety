@@ -10,6 +10,7 @@ import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IntersectionType;
+import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.ParameterizedType;
@@ -63,6 +64,9 @@ public class JavaFileVisitor extends ASTVisitor {
     if (!isTarget) {
       return false;
     }
+
+    // アノテーションを削除
+    node.modifiers().stream().filter(m -> m instanceof MarkerAnnotation).forEach(m -> ((MarkerAnnotation)m).delete());
 
     // 返値，メソッド名，メソッド全体の文字列, パスを利用してメソッドオブジェクトを生成
     final String returnType = returnTypeOptional.map(ASTNode::toString)
