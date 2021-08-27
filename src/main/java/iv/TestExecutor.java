@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -116,6 +117,21 @@ public class TestExecutor {
           }
 
           sourceTestMap.put(targetDir, testDir);
+        }
+
+        final Entry<Path, Path>[] entries = sourceTestMap.entrySet().toArray(Entry[]::new);
+        for(int left = 0 ; left < entries.length ; left++){
+          for(int right = left+1 ; right < entries.length ; right++){
+
+            if(left == right){
+              continue;
+            }
+
+            final List<String> junit1command = new ArrayList<>();
+            junit1command.add("java");
+            junit1command.add("org.junit.runner.JUnitCore");
+            junit1command.add("Target");
+          }
         }
 
         sourceTestMap.entrySet()
