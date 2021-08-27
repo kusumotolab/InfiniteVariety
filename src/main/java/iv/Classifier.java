@@ -95,13 +95,21 @@ public class Classifier {
 
         final AtomicInteger fileIndex = new AtomicInteger(1);
         for (final JavaMethod method : methods) {
-          final String fileName = "Class" + fileIndex.getAndIncrement();
-          final Path file = dir.resolve(fileName + ".java");
+          final Path subDir = dir.resolve(Integer.toString(fileIndex.getAndIncrement()));
+          Files.createDirectory(subDir);
+          final String fileName = "Target";
+          final Path file = subDir.resolve(fileName + ".java");
           Files.writeString(file, method.getClassText(fileName), StandardCharsets.UTF_8);
         }
-      } catch (IOException e) {
+      } catch (final IOException e) {
         e.printStackTrace();
       }
     }
+
+
+
+
   }
 }
+
+
