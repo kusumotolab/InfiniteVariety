@@ -53,7 +53,7 @@ public class JavaMethod {
     lines.add("    // lines: " + startLine + " to " + endLine);
     lines.add("    // permalink: " + getPermalink());
     for (final String line : text.split(System.lineSeparator())) {
-      lines.add("    " + line);
+      lines.add("    " + line.replace(name + "(", "__target__("));
     }
 
     lines.add("");
