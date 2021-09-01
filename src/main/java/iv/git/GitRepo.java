@@ -30,6 +30,7 @@ public class GitRepo {
   private static final Logger log = LoggerFactory.getLogger(GitRepo.class);
   public final IVConfig config;
   private FileRepository repository;
+
   public GitRepo(final IVConfig config) {
     log.trace("enter GitRepo(JMCConfig)");
 
