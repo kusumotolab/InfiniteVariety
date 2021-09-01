@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import org.sqlite.SQLiteErrorCode;
+import org.sqlite.SQLiteException;
 import iv.IVConfig;
 import iv.data.JavaMethod;
 
@@ -22,7 +24,8 @@ public class JavaMethodDAO {
       "end int, " + //
       "repo string, " + //
       "revision string, " + //
-      "primary key(start, end, path, repo, revision)";
+      "id integer primary key autoincrement";
+
   static public JavaMethodDAO SINGLETON = new JavaMethodDAO();
   private Connection connector;
   private IVConfig config;
@@ -42,6 +45,7 @@ public class JavaMethodDAO {
 
       final Statement statement = connector.createStatement();
       statement.executeUpdate("create table if not exists methods (" + METHODS_SCHEMA + ")");
+      statement.executeUpdate("create unique index if not exists sameness on methods (path, start, end, repo, revision)");
       connector.commit();
       statement.close();
     } catch (final ClassNotFoundException | SQLException e) {
@@ -54,7 +58,7 @@ public class JavaMethodDAO {
 
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods values (?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, text, path, start, end, repo, revision) values (?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
@@ -64,14 +68,23 @@ public class JavaMethodDAO {
         statement.setInt(6, method.endLine);
         statement.setString(7, method.repository);
         statement.setString(8, method.commit);
-        statement.addBatch();
+        try {
+          statement.execute();
+          connector.commit();
+        }catch(final SQLiteException e){
+          final SQLiteErrorCode code = e.getResultCode();
+          if(code.name().equals("SQLITE_CONSTRAINT_UNIQUE")) {
+            System.err.println(
+                "already registered: \"" + method.getNamedSignatureText() + "\" in " + method.path);
+          }else{
+            e.printStackTrace();
+          }
+        }
       }
 
-      statement.executeBatch();
-      connector.commit();
       statement.close();
 
-    } catch (SQLException e) {
+    } catch (final SQLException e) {
       e.printStackTrace();
     }
   }

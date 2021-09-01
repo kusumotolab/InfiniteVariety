@@ -42,6 +42,17 @@ public class JavaMethod {
     return builder.toString();
   }
 
+  public String getNamedSignatureText(){
+    final StringBuilder builder = new StringBuilder();
+    builder.append(returnType);
+    builder.append(" ");
+    builder.append(name);
+    builder.append("(");
+    builder.append(String.join(", ", parameters));
+    builder.append(")");
+    return builder.toString();
+  }
+
   public String getClassText(final String className) {
     final List<String> lines = new ArrayList<>();
     lines.add("public class " + className + " {");
