@@ -83,7 +83,8 @@ public class TestExecutor {
         for (final Path targetDir : targetDirs) {
 
           // "_test"で終わる場合はテストディレクトリだからスキップ
-          if(targetDir.toString().endsWith("_test")){
+          if (targetDir.toString()
+              .endsWith("_test")) {
             continue;
           }
 
@@ -101,7 +102,7 @@ public class TestExecutor {
 
           // 対象のメソッドのテストを生成
           final Path testDir = Paths.get(targetDir + "_test");
-          if(Files.notExists(testDir)) { // テストディレクトリが既に存在する場合は処理をスキップ
+          if (Files.notExists(testDir)) { // テストディレクトリが既に存在する場合は処理をスキップ
             final List<String> evosuiteCommand = new ArrayList<>();
             evosuiteCommand.add("java");
             evosuiteCommand.add("-jar");
@@ -123,24 +124,24 @@ public class TestExecutor {
           final List<String> javacCommand2 = new ArrayList<>();
           javacCommand2.add("javac");
           //javacCommand2.add(testDir.resolve("*.java").toString());
-          javacCommand2.add(testDir.resolve("Target_ESTest.java").toString());
-          javacCommand2.add(testDir.resolve("Target_ESTest_scaffolding.java").toString());
+          javacCommand2.add(testDir.resolve("Target_ESTest.java")
+              .toString());
+          javacCommand2.add(testDir.resolve("Target_ESTest_scaffolding.java")
+              .toString());
           final String cp = targetDir + ":" +
-              testDir.toString() + ":" +
+              testDir + ":" +
               "lib/evosuite-standalone-runtime-1.1.0.jar:" +
               "lib/junit-4.13.2.jar:" +
               "lib/hamcrest-core-1.3.jar";
           System.out.println("CLASSPATH=" + cp);
-          final Map<String, String > environmentVariables1 = new HashMap<>();
+          final Map<String, String> environmentVariables1 = new HashMap<>();
           environmentVariables1.put("CLASSPATH", cp);
           final int javaCommandExitValue2 = executeProcess(javacCommand2, environmentVariables1);
 
           // コンパイルに失敗した場合には以降の処理をしない
-          if(javaCommandExitValue2 != 0){
+          if (javaCommandExitValue2 != 0) {
             continue;
           }
-
-
 
           sourceTestMap.put(targetDir, testDir);
         }
@@ -162,13 +163,13 @@ public class TestExecutor {
             // leftのソースがrightのテストをパスするかを確認
             final String cp1 = entries[left].getKey() + ":" + entries[right].getValue() + ":" +
                 "lib/evosuite-standalone-runtime-1.1.0.jar:" +
-            "lib/junit-4.13.2.jar:" +
-            "lib/hamcrest-core-1.3.jar";
+                "lib/junit-4.13.2.jar:" +
+                "lib/hamcrest-core-1.3.jar";
             System.out.println(cp1);
-            final Map<String, String > environmentVariables1 = new HashMap<>();
+            final Map<String, String> environmentVariables1 = new HashMap<>();
             environmentVariables1.put("CLASSPATH", cp1);
             final int junit1CommandExitValue = executeProcess(junit1command, environmentVariables1);
-            if(junit1CommandExitValue != 0){
+            if (junit1CommandExitValue != 0) {
               continue;
             }
 
@@ -178,10 +179,10 @@ public class TestExecutor {
                 "lib/junit-4.13.2.jar:" +
                 "lib/hamcrest-core-1.3.jar";
             System.out.println(cp2);
-            final Map<String, String > environmentVariables2 = new HashMap<>();
+            final Map<String, String> environmentVariables2 = new HashMap<>();
             environmentVariables2.put("CLASSPATH", cp2);
             final int junit2CommandExitValue = executeProcess(junit1command, environmentVariables2);
-            if(junit2CommandExitValue != 0){
+            if (junit2CommandExitValue != 0) {
               continue;
             }
 
@@ -199,11 +200,12 @@ public class TestExecutor {
     }
   }
 
-  private int executeProcess(final List<String> command){
+  private int executeProcess(final List<String> command) {
     return executeProcess(command, Collections.EMPTY_MAP);
   }
 
-  private int executeProcess(final List<String> command, final Map<String, String> environmentVariables) {
+  private int executeProcess(final List<String> command,
+      final Map<String, String> environmentVariables) {
     try {
       final ProcessBuilder processBuilder = new ProcessBuilder(command);
       processBuilder.redirectErrorStream(true);
