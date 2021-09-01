@@ -45,7 +45,8 @@ public class JavaMethodDAO {
 
       final Statement statement = connector.createStatement();
       statement.executeUpdate("create table if not exists methods (" + METHODS_SCHEMA + ")");
-      statement.executeUpdate("create unique index if not exists sameness on methods (path, start, end, repo, revision)");
+      statement.executeUpdate(
+          "create unique index if not exists sameness on methods (path, start, end, repo, revision)");
       connector.commit();
       statement.close();
     } catch (final ClassNotFoundException | SQLException e) {
@@ -71,12 +72,13 @@ public class JavaMethodDAO {
         try {
           statement.execute();
           connector.commit();
-        }catch(final SQLiteException e){
+        } catch (final SQLiteException e) {
           final SQLiteErrorCode code = e.getResultCode();
-          if(code.name().equals("SQLITE_CONSTRAINT_UNIQUE")) {
+          if (code.name()
+              .equals("SQLITE_CONSTRAINT_UNIQUE")) {
             System.err.println(
                 "already registered: \"" + method.getNamedSignatureText() + "\" in " + method.path);
-          }else{
+          } else {
             e.printStackTrace();
           }
         }
@@ -114,7 +116,7 @@ public class JavaMethodDAO {
     try {
       final Statement statement = connector.createStatement();
       final ResultSet results = statement.executeQuery(
-          "select name, text, path, start, end, repo, revision from methods where signature = \""
+          "select name, text, path, start, end, repo, revision, id from methods where signature = \""
               + signature + "\"");
       while (results.next()) {
         final String name = results.getString(1);
@@ -124,8 +126,9 @@ public class JavaMethodDAO {
         final int end = results.getInt(5);
         final String repo = results.getString(6);
         final String commit = results.getString(7);
+        final int id = results.getInt(8);
         final JavaMethod method = new JavaMethod(signature, name, text, path, start, end, repo,
-            commit);
+            commit, id);
         methods.add(method);
       }
     } catch (final SQLException e) {

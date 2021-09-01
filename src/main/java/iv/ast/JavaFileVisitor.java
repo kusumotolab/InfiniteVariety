@@ -66,7 +66,10 @@ public class JavaFileVisitor extends ASTVisitor {
     }
 
     // アノテーションを削除
-    node.modifiers().stream().filter(m -> m instanceof MarkerAnnotation).forEach(m -> ((MarkerAnnotation)m).delete());
+    node.modifiers()
+        .stream()
+        .filter(m -> m instanceof MarkerAnnotation)
+        .forEach(m -> ((MarkerAnnotation) m).delete());
 
     // 返値，メソッド名，メソッド全体の文字列, パスを利用してメソッドオブジェクトを生成
     final String returnType = returnTypeOptional.map(ASTNode::toString)

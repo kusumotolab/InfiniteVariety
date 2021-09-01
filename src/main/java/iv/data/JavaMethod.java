@@ -13,11 +13,18 @@ public class JavaMethod {
   public final int endLine;
   public final String repository;
   public final String commit;
+  public final int id;
   private final List<String> parameters;
 
   public JavaMethod(final String returnType, final String name, final String text,
       final String path, final int startLine, final int endLine, final String repository,
       final String commit) {
+    this(returnType, name, text, path, startLine, endLine, repository, commit, -1);
+  }
+
+  public JavaMethod(final String returnType, final String name, final String text,
+      final String path, final int startLine, final int endLine, final String repository,
+      final String commit, final int id) {
     this.returnType = returnType;
     this.parameters = new ArrayList<>();
     this.name = name;
@@ -27,6 +34,7 @@ public class JavaMethod {
     this.endLine = endLine;
     this.repository = repository;
     this.commit = commit;
+    this.id = id;
   }
 
   public void addParameter(final String parameter) {
@@ -42,7 +50,7 @@ public class JavaMethod {
     return builder.toString();
   }
 
-  public String getNamedSignatureText(){
+  public String getNamedSignatureText() {
     final StringBuilder builder = new StringBuilder();
     builder.append(returnType);
     builder.append(" ");
