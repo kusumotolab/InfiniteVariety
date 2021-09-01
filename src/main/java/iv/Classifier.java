@@ -90,12 +90,13 @@ public class Classifier {
 
       final Path dir = outputPath.resolve(dirIndex.getAndIncrement() + "." + signature);
       try {
+
+        // シグネチャを名前としてもつディレクトリを作成する
         FileUtils.deleteDirectory(dir.toFile());
         Files.createDirectory(dir);
 
-        final AtomicInteger fileIndex = new AtomicInteger(1);
         for (final JavaMethod method : methods) {
-          final Path subDir = dir.resolve(Integer.toString(fileIndex.getAndIncrement()));
+          final Path subDir = dir.resolve(Integer.toString(method.id));
           Files.createDirectory(subDir);
           final String fileName = "Target";
           final Path file = subDir.resolve(fileName + ".java");
@@ -105,8 +106,6 @@ public class Classifier {
         e.printStackTrace();
       }
     }
-
-
 
 
   }
