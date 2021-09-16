@@ -14,6 +14,7 @@ import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
+import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedType;
@@ -67,16 +68,10 @@ public class JavaFileVisitor extends ASTVisitor {
     }
 
     // アノテーションを削除
-    node.modifiers()
-        .stream()
-        .filter(m -> m instanceof MarkerAnnotation)
-        .forEach(m -> ((MarkerAnnotation) m).delete());
+    node.modifiers().removeIf(m -> m instanceof MarkerAnnotation || m instanceof NormalAnnotation);
 
-//    // staticを削除
-//    node.modifiers()
-//        .stream()
-//        .filter(m -> m instanceof Modifier && ((Modifier) m).isStatic())
-//        .forEach(m -> ((Modifier) m).delete());
+    // staticを削除
+    node.modifiers().removeIf(m -> m instanceof Modifier && ((Modifier)m).isStatic());
 
     // 返値，メソッド名，メソッド全体の文字列, パスを利用してメソッドオブジェクトを生成
     final String returnType = returnTypeOptional.map(ASTNode::toString)
