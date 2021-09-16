@@ -3,6 +3,7 @@ package iv;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +19,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import iv.db.JavaMethodDAO;
 import iv.util.Timer;
 
 public class TestExecutor {
@@ -65,6 +67,9 @@ public class TestExecutor {
       System.exit(0);
     }
 
+    // 指定されたデータベースを読み込む
+    JavaMethodDAO.SINGLETON.initialize(config);
+
     final List<String[]> equivalentMethodPairs = new ArrayList<>();
 
     try {
@@ -96,6 +101,12 @@ public class TestExecutor {
                     .toString());
             final int exitValue = executeProcess(command);
 
+            // コンパイルの可否をデータベースに保存
+            final int methodID = Integer.valueOf(targetDir.getFileName()
+                .toString());
+            final boolean compilable = 0 == exitValue;
+            JavaMethodDAO.SINGLETON.setCompilable(methodID, compilable);
+
             // コンパイル失敗の場合はこのメソッドに対して以降の処理をしない
             if (exitValue != 0) {
               continue;
@@ -119,10 +130,11 @@ public class TestExecutor {
           }
 
           {// 生成したテストをコンパイル
+            final Path target_ESTest = testDir.resolve("Target_ESTest.java");
+            final Path target_ESTest_scaffolding = testDir.resolve(
+                "Target_ESTest_scaffolding.java");
             final List<String> command = Arrays.asList("javac",
-                testDir.resolve("Target_ESTest.java")
-                    .toString(), testDir.resolve("Target_ESTest_scaffolding.java")
-                    .toString());
+                target_ESTest.toString(), target_ESTest_scaffolding.toString());
             final String classpath = getClassPath(targetDir, testDir);
             final Map<String, String> environmentVariables1 = new HashMap<>();
             environmentVariables1.put("CLASSPATH", classpath);
@@ -132,6 +144,15 @@ public class TestExecutor {
             if (exitValue != 0) {
               continue;
             }
+
+            // テストをデータベースに保存
+            final int methodID = Integer.valueOf(targetDir.getFileName()
+                .toString());
+            final String text1 = Files.readString(target_ESTest, StandardCharsets.UTF_8);
+            final String text2 = Files.readString(target_ESTest_scaffolding,
+                StandardCharsets.UTF_8);
+            JavaMethodDAO.SINGLETON.setTests(methodID, text1, text2);
+
           }
 
           sourceTestMap.put(targetDir, testDir);
@@ -174,9 +195,13 @@ public class TestExecutor {
               continue;
             }
 
-            final String leftMethodID = entries[left].getValue().getFileName().toString();
-            final String rightMethodID = entries[right].getValue().getFileName().toString();
-            final String[] pair = new String[]{leftMethodID, rightMethodID};
+            final String leftMethodID = entries[left].getValue()
+                .getFileName()
+                .toString();
+            final String rightMethodID = entries[right].getValue()
+                .getFileName()
+                .toString();
+            final String[] pair = new String[] {leftMethodID, rightMethodID};
             equivalentMethodPairs.add(pair);
 
             System.out.println(leftMethodID + " : " + rightMethodID);

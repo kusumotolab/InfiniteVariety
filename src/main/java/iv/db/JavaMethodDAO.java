@@ -24,6 +24,9 @@ public class JavaMethodDAO {
       "end int, " + //
       "repo string, " + //
       "revision string, " + //
+      "compilable int, " + //
+      "Target_ESTest blob, " + //
+      "Target_ESTest_scaffolding blob, " + //
       "id integer primary key autoincrement";
 
   static public JavaMethodDAO SINGLETON = new JavaMethodDAO();
@@ -59,7 +62,7 @@ public class JavaMethodDAO {
 
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods(signature, name, text, path, start, end, repo, revision) values (?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, text, path, start, end, repo, revision, compilable) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
@@ -69,6 +72,7 @@ public class JavaMethodDAO {
         statement.setInt(6, method.endLine);
         statement.setString(7, method.repository);
         statement.setString(8, method.commit);
+        statement.setInt(9, -1);
         try {
           statement.execute();
           connector.commit();
@@ -86,6 +90,36 @@ public class JavaMethodDAO {
 
       statement.close();
 
+    } catch (final SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  synchronized public void setCompilable(final int id, final boolean compilable) {
+
+    try {
+      System.out.println("setCompilable: " + id);
+      final PreparedStatement statement = connector.prepareStatement("update methods set compilable = ? where id = ?");
+      statement.setBoolean(1, compilable);
+      statement.setInt(2, id);
+      statement.executeUpdate();
+      connector.commit();
+    } catch (final SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  synchronized public void setTests(final int id, final String target_ESTest,
+      final String target_ESTest_scaffolding) {
+
+    try {
+      final PreparedStatement statement = connector.prepareStatement(
+          "update methods set Target_ESTest = ?, Target_ESTest_scaffolding = ? where id = ?");
+      statement.setBytes(1, target_ESTest.getBytes());
+      statement.setBytes(2, target_ESTest_scaffolding.getBytes());
+      statement.setInt(3, id);
+      statement.executeUpdate();
+      connector.commit();
     } catch (final SQLException e) {
       e.printStackTrace();
     }
