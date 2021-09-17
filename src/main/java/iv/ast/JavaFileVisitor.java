@@ -58,10 +58,16 @@ public class JavaFileVisitor extends ASTVisitor {
     final List<SingleVariableDeclaration> parameters = (List<SingleVariableDeclaration>) node.parameters();
     final Optional<Block> bodyOptional = Optional.ofNullable(node.getBody());
 
-    //ビジターを利用して条件を満たすかチェック
+    //ビジターを利用して，返値と引数が条件を満たすかチェック
     isTarget = true;
     returnTypeOptional.ifPresent(r -> r.accept(this));
     parameters.forEach(p -> p.accept(this));
+    if(!isTarget){
+      return false;
+    }
+
+    //ビジターを利用して，メソッドボディが条件を満たすかチェック
+    //返値と引数のチェックのあとのif文を取り除いてはいけない
     bodyOptional.ifPresent(b -> b.accept(this));
     if (!isTarget) {
       return false;
