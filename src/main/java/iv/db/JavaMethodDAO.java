@@ -109,6 +109,39 @@ public class JavaMethodDAO {
     }
   }
 
+  public boolean isCompilable(final String id){
+
+    try{
+      return isCompilable(Integer.parseInt(id));
+    }catch(final NumberFormatException e){
+      return false;
+    }
+  }
+
+  synchronized public boolean isCompilable(final int id){
+    try {
+      final PreparedStatement statement = connector.prepareStatement("select compilable from methods where id = ?");
+      statement.setInt(1, id);
+      final ResultSet results = statement.executeQuery();
+
+      // 該当するIDのメソッドがない場合にはfalseを返す
+      if(!results.next()){
+        return false;
+      }
+
+      // 該当するIDのメソッドがある場合にはそのcompilableカラムをチェックする
+      final int compilable = results.getInt(1);
+      return compilable == 1;
+
+    }catch(final SQLException e){
+      e.printStackTrace();
+    }
+
+    return false;
+  }
+
+
+
   synchronized public void setTests(final int id, final String target_ESTest,
       final String target_ESTest_scaffolding) {
 
