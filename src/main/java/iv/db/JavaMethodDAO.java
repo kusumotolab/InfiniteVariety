@@ -10,6 +10,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
 import iv.IVConfig;
@@ -28,6 +29,7 @@ public class JavaMethodDAO {
       "compilable int, " + //
       "Target_ESTest blob, " + //
       "Target_ESTest_scaffolding blob, " + //
+      "groupID int, " + //
       "id integer primary key autoincrement";
 
   static public JavaMethodDAO SINGLETON = new JavaMethodDAO();
@@ -63,7 +65,7 @@ public class JavaMethodDAO {
 
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods(signature, name, text, path, start, end, repo, revision, compilable) values (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, text, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
@@ -74,6 +76,7 @@ public class JavaMethodDAO {
         statement.setString(7, method.repository);
         statement.setString(8, method.commit);
         statement.setInt(9, -1);
+        statement.setInt(10, -1);
         try {
           statement.execute();
           connector.commit();
@@ -99,8 +102,8 @@ public class JavaMethodDAO {
   synchronized public void setCompilable(final int id, final boolean compilable) {
 
     try {
-      System.out.println("setCompilable: " + id);
-      final PreparedStatement statement = connector.prepareStatement("update methods set compilable = ? where id = ?");
+      final PreparedStatement statement = connector.prepareStatement(
+          "update methods set compilable = ? where id = ?");
       statement.setBoolean(1, compilable);
       statement.setInt(2, id);
       statement.executeUpdate();
@@ -110,23 +113,24 @@ public class JavaMethodDAO {
     }
   }
 
-  public boolean isCompilable(final String id){
+  public boolean isCompilable(final String id) {
 
-    try{
+    try {
       return isCompilable(Integer.parseInt(id));
-    }catch(final NumberFormatException e){
+    } catch (final NumberFormatException e) {
       return false;
     }
   }
 
-  synchronized public boolean isCompilable(final int id){
+  synchronized public boolean isCompilable(final int id) {
     try {
-      final PreparedStatement statement = connector.prepareStatement("select compilable from methods where id = ?");
+      final PreparedStatement statement = connector.prepareStatement(
+          "select compilable from methods where id = ?");
       statement.setInt(1, id);
       final ResultSet results = statement.executeQuery();
 
       // 該当するIDのメソッドがない場合にはfalseを返す
-      if(!results.next()){
+      if (!results.next()) {
         return false;
       }
 
@@ -134,13 +138,36 @@ public class JavaMethodDAO {
       final int compilable = results.getInt(1);
       return compilable == 1;
 
-    }catch(final SQLException e){
+    } catch (final SQLException e) {
       e.printStackTrace();
     }
 
     return false;
   }
 
+  public boolean exists(final String id) {
+
+    try {
+      return exists(Integer.parseInt(id));
+    } catch (final NumberFormatException e) {
+      return false;
+    }
+  }
+
+  synchronized public boolean exists(final int id) {
+    try {
+      final PreparedStatement statement = connector.prepareStatement(
+          "select * from methods where id = ?");
+      statement.setInt(1, id);
+      final ResultSet results = statement.executeQuery();
+      return results.next();
+
+    } catch (final SQLException e) {
+      e.printStackTrace();
+    }
+
+    return false;
+  }
 
 
   synchronized public void setTests(final int id, final String target_ESTest,
@@ -155,6 +182,22 @@ public class JavaMethodDAO {
       statement.executeUpdate();
       connector.commit();
     } catch (final SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  synchronized public void setGroup(final Set<Integer> methodIDs, final int groupID){
+
+    try{
+      final PreparedStatement statement = connector.prepareStatement("update methods set groupID = ? where id = ?");
+      for (final Integer methodID : methodIDs) {
+        statement.setInt(1, groupID);
+        statement.setInt(2, methodID);
+        statement.addBatch();
+      }
+      statement.executeBatch();
+      connector.commit();
+    }catch(final SQLException e){
       e.printStackTrace();
     }
   }

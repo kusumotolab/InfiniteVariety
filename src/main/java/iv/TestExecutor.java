@@ -5,8 +5,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -69,6 +72,8 @@ public class TestExecutor extends TestRunner {
           .filter(Files::isDirectory)
           .collect(Collectors.toList());
 
+      final AtomicInteger groupID = new AtomicInteger(1);
+
       // 各カテゴリに対する処理のループ
       for (final Path groupDir : groupDirs) {
         final List<Path> targetDirs = Files.list(groupDir)
@@ -81,6 +86,9 @@ public class TestExecutor extends TestRunner {
                 .toString()))
             .collect(
                 Collectors.toList());
+
+        // 振る舞いが同じテスト群を格納するための入れ物を準備
+        final Map<Integer, Set<Integer>> methodGroups = new HashMap<>();
 
         // メソッドAを，メソッドBのテストケースを利用してテストする．
         for (int leftIndex = 0; leftIndex < compilableMethodDirs.size(); leftIndex++) {
@@ -133,11 +141,39 @@ public class TestExecutor extends TestRunner {
               continue;
             }
 
-            System.out.println("@@@@@Same functionality: " + leftSourceDirName + " : " + rightSourceDirName);
+            final int leftMethodID = Integer.valueOf(leftSourceDirName);
+            final int rightMethodID = Integer.valueOf(rightSourceDirName);
+            final Set<Integer> leftMethodGroup = methodGroups.get(leftMethodID);
+            final Set<Integer> rightMethodGroup = methodGroups.get(rightMethodID);
+            if (null == leftMethodGroup && null == rightMethodGroup) {
+              final Set<Integer> newGroup = new HashSet<>();
+              newGroup.add(leftMethodID);
+              newGroup.add(rightMethodID);
+              methodGroups.put(leftMethodID, newGroup);
+              methodGroups.put(rightMethodID, newGroup);
+            } else if (null != leftMethodGroup && null == rightMethodGroup) {
+              leftMethodGroup.add(rightMethodID);
+              methodGroups.put(rightMethodID, leftMethodGroup);
+            } else if (null == leftMethodGroup && null != rightMethodGroup) {
+              rightMethodGroup.add(leftMethodID);
+              methodGroups.put(leftMethodID, rightMethodGroup);
+            } else if (null != leftMethodGroup && null != rightMethodGroup
+                && leftMethodGroup != rightMethodGroup) {
+              rightMethodGroup.forEach(rMethodID -> {
+                leftMethodGroup.add(rMethodID);
+                methodGroups.remove(rMethodID);
+                methodGroups.put(rMethodID, leftMethodGroup);
+              });
+            }
           }
         }
-      }
 
+        final List<Set<Integer>> groups = methodGroups.values()
+            .stream()
+            .distinct()
+            .collect(Collectors.toList());
+        groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, groupID.getAndIncrement()));
+      }
 
     } catch (final IOException e) {
       e.printStackTrace();

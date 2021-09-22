@@ -47,8 +47,8 @@ public class TestGenerator extends TestRunner {
     final Timer timer = new Timer();
     timer.start();
 
-    final TestExecutor executor = new TestExecutor(config);
-    executor.exec();
+    final TestGenerator generator = new TestGenerator(config);
+    generator.exec();
 
     timer.stop();
     logger.info("elapsed time: {}", timer);
@@ -82,9 +82,9 @@ public class TestGenerator extends TestRunner {
         // 各対象クラス（メソッド）に対する処理のループ
         for (final Path targetDir : targetDirs) {
 
-          // "_test"で終わる場合はテストディレクトリだからスキップ
-          if (targetDir.toString()
-              .endsWith("_test")) {
+          // ディレクトリ名がメソッドIDでない場合は対象メソッドではないからスキップ
+          final String targetDirName = targetDir.getFileName().toString();
+          if(!JavaMethodDAO.SINGLETON.exists(targetDirName)){
             continue;
           }
 
@@ -95,8 +95,7 @@ public class TestGenerator extends TestRunner {
             final int exitValue = executeProcess(command);
 
             // コンパイルの可否をデータベースに保存
-            final int methodID = Integer.valueOf(targetDir.getFileName()
-                .toString());
+            final int methodID = Integer.valueOf(targetDirName);
             final boolean compilable = 0 == exitValue;
             JavaMethodDAO.SINGLETON.setCompilable(methodID, compilable);
 
@@ -139,8 +138,7 @@ public class TestGenerator extends TestRunner {
             }
 
             // テストをデータベースに保存
-            final int methodID = Integer.valueOf(targetDir.getFileName()
-                .toString());
+            final int methodID = Integer.valueOf(targetDirName);
             final String text1 = Files.readString(target_ESTest, StandardCharsets.UTF_8);
             final String text2 = Files.readString(target_ESTest_scaffolding,
                 StandardCharsets.UTF_8);
