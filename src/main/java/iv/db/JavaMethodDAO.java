@@ -1,5 +1,6 @@
 package iv.db;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -18,7 +19,7 @@ public class JavaMethodDAO {
 
   static public final String METHODS_SCHEMA = "signature string, " + //
       "name string, " + //
-      "text string, " + //
+      "text blob, " + //
       "path string, " + //
       "start int, " + //
       "end int, " + //
@@ -66,7 +67,7 @@ public class JavaMethodDAO {
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
-        statement.setString(3, method.text);
+        statement.setBytes(3, method.text.getBytes());
         statement.setString(4, method.path);
         statement.setInt(5, method.startLine);
         statement.setInt(6, method.endLine);
@@ -187,7 +188,7 @@ public class JavaMethodDAO {
               + signature + "\"");
       while (results.next()) {
         final String name = results.getString(1);
-        final String text = results.getString(2);
+        final String text = new String(results.getBytes(2), StandardCharsets.UTF_8);
         final String path = results.getString(3);
         final int start = results.getInt(4);
         final int end = results.getInt(5);
