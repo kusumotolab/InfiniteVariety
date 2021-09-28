@@ -79,6 +79,11 @@ public class JavaFileVisitor extends ASTVisitor {
     // staticを削除
     node.modifiers().removeIf(m -> m instanceof Modifier && ((Modifier)m).isStatic());
 
+    // privateを削除
+    node.modifiers().removeIf(m -> m instanceof Modifier && ((Modifier)m).isPrivate());
+
+
+
     // 返値，メソッド名，メソッド全体の文字列, パスを利用してメソッドオブジェクトを生成
     final String returnType = returnTypeOptional.map(ASTNode::toString)
         .orElse("void");
