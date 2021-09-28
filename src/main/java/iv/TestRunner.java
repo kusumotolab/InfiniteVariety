@@ -38,7 +38,7 @@ public abstract class TestRunner {
   }
 
   protected String getClassPath(final Path targetDir, Path testDir) {
-    return targetDir + ":" + testDir + ":" + "lib/evosuite-standalone-runtime-1.1.0.jar:" +
+    return targetDir + ":" + testDir + ":" + "lib/evosuite-standalone-runtime-1.2.0.jar:" +
         "lib/junit-4.13.2.jar:" + "lib/hamcrest-core-1.3.jar";
   }
 

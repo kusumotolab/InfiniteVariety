@@ -110,7 +110,7 @@ public class TestGenerator extends TestRunner {
           {
             if (Files.notExists(testDir)) { // テストディレクトリが既に存在する場合は処理をスキップ
               final List<String> command = Arrays.asList("java", "-jar",
-                  "lib/evosuite-1.1.0.jar", "-class", "Target", "-projectCP", targetDir.toString(),
+                  "lib/evosuite-1.2.0.jar", "-class", "Target", "-projectCP", targetDir.toString(),
                   "-Dtest_dir=" + testDir);
               final int exitValue = executeProcess(command);
 
