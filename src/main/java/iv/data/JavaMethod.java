@@ -63,6 +63,7 @@ public class JavaMethod {
 
   public String getClassText(final String className) {
     final List<String> lines = new ArrayList<>();
+    lines.add("import java.util.*;");
     lines.add("public class " + className + " {");
     lines.add("");
 
