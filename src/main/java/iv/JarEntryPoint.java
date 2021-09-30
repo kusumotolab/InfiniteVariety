@@ -18,7 +18,19 @@ public class JarEntryPoint {
     String className = null;
     switch (args[0]) {
       case "register": {
-        className = "jmc.Registerer";
+        className = "iv.Registerer";
+        break;
+      }
+      case "classify": {
+        className = "iv.Classifier";
+        break;
+      }
+      case "generate": {
+        className = "iv.TestGenerator";
+        break;
+      }
+      case "execute": {
+        className = "iv.TestExecutor";
         break;
       }
       default: {
@@ -38,7 +50,6 @@ public class JarEntryPoint {
       log.error("main method was not found in class");
     } catch (final InvocationTargetException e) {
       log.error("An exception was thrown by invoked main method");
-      log.error(e.getMessage());
     } catch (final IllegalAccessException e) {
       log.error("failed to access main method");
     }
