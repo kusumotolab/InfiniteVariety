@@ -282,13 +282,8 @@ public class JavaFileVisitor extends ASTVisitor {
     node.modifiers()
         .removeIf(m -> m instanceof MarkerAnnotation || m instanceof NormalAnnotation);
 
-    // staticを削除
-    node.modifiers()
-        .removeIf(m -> m instanceof Modifier && ((Modifier) m).isStatic());
-
-    // privateを削除
-    node.modifiers()
-        .removeIf(m -> m instanceof Modifier && ((Modifier) m).isPrivate());
+    // 修飾子を削除
+    node.modifiers().removeIf(m -> m instanceof Modifier);
 
     // Javadocを削除
     Optional.ofNullable(node.getJavadoc())
