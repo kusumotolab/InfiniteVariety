@@ -1,5 +1,7 @@
 package iv.data;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,13 +19,16 @@ public class JavaMethod {
   public final int id;
   private final List<String> parameters;
 
-  public JavaMethod(final String returnType, final String name, final String rawText, final String normalizedText,
+  public JavaMethod(final String returnType, final String name, final String rawText,
+      final String normalizedText,
       final String path, final int startLine, final int endLine, final String repository,
       final String commit) {
-    this(returnType, name, rawText, normalizedText, path, startLine, endLine, repository, commit, -1);
+    this(returnType, name, rawText, normalizedText, path, startLine, endLine, repository, commit,
+        -1);
   }
 
-  public JavaMethod(final String returnType, final String name, final String rawText, final String normalizedText,
+  public JavaMethod(final String returnType, final String name, final String rawText,
+      final String normalizedText,
       final String path, final int startLine, final int endLine, final String repository,
       final String commit, final int id) {
     this.returnType = returnType;
@@ -102,5 +107,18 @@ public class JavaMethod {
     return repository.replace(":", "/") // httpsより先にある必要あり
         .replace("git@", "https://")
         .replace(".git", "");
+  }
+
+  public byte[] getMD5() {
+    final String textForHash = normalizedText.replace(" ", "")
+        .replace("\t", "")
+        .replace(System.lineSeparator(), "");
+    try {
+      final MessageDigest md5 = MessageDigest.getInstance("MD5");
+      return md5.digest(textForHash.getBytes());
+    } catch (final NoSuchAlgorithmException e) {
+      e.printStackTrace();
+    }
+    return new byte[] {};
   }
 }

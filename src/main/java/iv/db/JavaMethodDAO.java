@@ -22,6 +22,7 @@ public class JavaMethodDAO {
       "name string, " + //
       "rtext blob, " + //
       "ntext blob, " + //
+      "hash blob," + //
       "path string, " + //
       "start int, " + //
       "end int, " + //
@@ -66,19 +67,20 @@ public class JavaMethodDAO {
 
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods(signature, name, rtext, ntext, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, rtext, ntext, hash, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
         statement.setBytes(3, method.rawText.getBytes());
         statement.setBytes(4, method.normalizedText.getBytes());
-        statement.setString(5, method.path);
-        statement.setInt(6, method.startLine);
-        statement.setInt(7, method.endLine);
-        statement.setString(8, method.repository);
-        statement.setString(9, method.commit);
-        statement.setInt(10, -1);
+        statement.setBytes(5, method.getMD5());
+        statement.setString(6, method.path);
+        statement.setInt(7, method.startLine);
+        statement.setInt(8, method.endLine);
+        statement.setString(9, method.repository);
+        statement.setString(10, method.commit);
         statement.setInt(11, -1);
+        statement.setInt(12, -1);
         try {
           statement.execute();
           connector.commit();
