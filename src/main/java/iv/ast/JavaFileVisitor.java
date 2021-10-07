@@ -323,6 +323,7 @@ public class JavaFileVisitor extends ASTVisitor {
     // このメソッドの正規化文字列を取得
     final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.pop();
     normalizationTargetNodes.forEach(n -> n.setIdentifier("$variable"));
+    node.getName().setIdentifier("$method");
     final String normalizedText = node.toString();
 
     // 返値，メソッド名，メソッド全体の文字列, 正規化後の文字列，パスを利用してメソッドオブジェクトを生成
