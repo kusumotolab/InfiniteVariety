@@ -93,7 +93,7 @@ public class TestGenerator extends TestRunner {
             continue;
           }
 
-          System.out.println("trying to generate tests for " + targetDirName);
+          //System.out.println("trying to generate tests for " + targetDirName);
           executorService.execute(new Runnable() {
 
             @Override

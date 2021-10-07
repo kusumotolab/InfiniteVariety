@@ -126,7 +126,7 @@ public class TestExecutor extends TestRunner {
               @Override
               public void run() {
 
-                System.out.println("checking compatibility between " + leftSourceDirName + " and " + rightSourceDirName);
+                //System.out.println("checking compatibility between " + leftSourceDirName + " and " + rightSourceDirName);
 
                 final List<String> command = Arrays.asList("java",
                     "org.junit.runner.JUnitCore",
