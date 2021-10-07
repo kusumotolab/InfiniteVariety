@@ -7,7 +7,8 @@ public class JavaMethod {
 
   public final String returnType;
   public final String name;
-  public final String text;
+  public final String rawText;
+  public final String normalizedText;
   public final String path;
   public final int startLine;
   public final int endLine;
@@ -16,19 +17,20 @@ public class JavaMethod {
   public final int id;
   private final List<String> parameters;
 
-  public JavaMethod(final String returnType, final String name, final String text,
+  public JavaMethod(final String returnType, final String name, final String rawText, final String normalizedText,
       final String path, final int startLine, final int endLine, final String repository,
       final String commit) {
-    this(returnType, name, text, path, startLine, endLine, repository, commit, -1);
+    this(returnType, name, rawText, normalizedText, path, startLine, endLine, repository, commit, -1);
   }
 
-  public JavaMethod(final String returnType, final String name, final String text,
+  public JavaMethod(final String returnType, final String name, final String rawText, final String normalizedText,
       final String path, final int startLine, final int endLine, final String repository,
       final String commit, final int id) {
     this.returnType = returnType;
     this.parameters = new ArrayList<>();
     this.name = name;
-    this.text = text;
+    this.rawText = rawText;
+    this.normalizedText = normalizedText;
     this.path = path;
     this.startLine = startLine;
     this.endLine = endLine;
@@ -72,7 +74,7 @@ public class JavaMethod {
     lines.add("    // path: " + path);
     lines.add("    // lines: " + startLine + " to " + endLine);
     lines.add("    // permalink: " + getPermalink());
-    for (final String line : text.split(System.lineSeparator())) {
+    for (final String line : rawText.split(System.lineSeparator())) {
       lines.add("    " + line.replace(name + "(", "__target__("));
     }
 

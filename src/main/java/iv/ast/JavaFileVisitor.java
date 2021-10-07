@@ -5,21 +5,25 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Stack;
 import java.util.stream.Stream;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IntersectionType;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedType;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
@@ -36,6 +40,7 @@ public class JavaFileVisitor extends ASTVisitor {
   private final RevCommit commit;
   private final String path;
   private final List<JavaMethod> javaMethods;
+  private final Stack<List<SimpleName>> normalizationTargetNodesStack;
   private final String[] javalangClasses = new String[] {
       "AbstractMethodError",//
       "Appendable",//
@@ -260,6 +265,7 @@ public class JavaFileVisitor extends ASTVisitor {
     this.path = path;
     this.isTarget = true;
     this.javaMethods = new ArrayList<>();
+    this.normalizationTargetNodesStack = new Stack<>();
   }
 
   public List<JavaMethod> getJavaMethods() {
@@ -269,25 +275,8 @@ public class JavaFileVisitor extends ASTVisitor {
   @Override
   public boolean visit(final MethodDeclaration node) {
 
-    // 返値，引数，ボディのノードを取得
-    final Optional<Type> returnTypeOptional = Optional.ofNullable(node.getReturnType2());
-    final List<SingleVariableDeclaration> parameters = (List<SingleVariableDeclaration>) node.parameters();
-    final Optional<Block> bodyOptional = Optional.ofNullable(node.getBody());
-
-    //ビジターを利用して，返値と引数が条件を満たすかチェック
-    isTarget = true;
-    returnTypeOptional.ifPresent(r -> r.accept(this));
-    parameters.forEach(p -> p.accept(this));
-    if (!isTarget) {
-      return false;
-    }
-
-    //ビジターを利用して，メソッドボディが条件を満たすかチェック
-    //返値と引数のチェックのあとのif文を取り除いてはいけない
-    bodyOptional.ifPresent(b -> b.accept(this));
-    if (!isTarget) {
-      return false;
-    }
+    // 正規化する変数名を表すノードを記録するための処理
+    normalizationTargetNodesStack.push(new ArrayList<SimpleName>());
 
     // アノテーションを削除
     node.modifiers()
@@ -301,18 +290,51 @@ public class JavaFileVisitor extends ASTVisitor {
     node.modifiers()
         .removeIf(m -> m instanceof Modifier && ((Modifier) m).isPrivate());
 
-    // 返値，メソッド名，メソッド全体の文字列, パスを利用してメソッドオブジェクトを生成
+    // Javadocを削除
+    Optional.ofNullable(node.getJavadoc())
+        .ifPresent(j -> j.delete());
+
+    //　このメソッドの生文字列を取り出しておく
+    // この処理はnode.getBody()に対するビジター処理よりも先になければいけない
+    final String rawText = node.toString();
+
+    // 返値，引数，ボディのノードを取得
+    final Optional<Type> returnTypeOptional = Optional.ofNullable(node.getReturnType2());
+    final List<SingleVariableDeclaration> parameters = (List<SingleVariableDeclaration>) node.parameters();
+    final Optional<Block> bodyOptional = Optional.ofNullable(node.getBody());
+
+    //ビジターを利用して，返値と引数が条件を満たすかチェック
+    isTarget = true;
+    returnTypeOptional.ifPresent(r -> r.accept(this));
+    parameters.forEach(p -> p.accept(this));
+    if (!isTarget) {
+      normalizationTargetNodesStack.pop();
+      return false;
+    }
+
+    //ビジターを利用して，メソッドボディが条件を満たすかチェック
+    //返値と引数のチェックのあとのif文を取り除いてはいけない
+    bodyOptional.ifPresent(b -> b.accept(this));
+    if (!isTarget) {
+      normalizationTargetNodesStack.pop();
+      return false;
+    }
+
+    // このメソッドの正規化文字列を取得
+    final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.pop();
+    normalizationTargetNodes.forEach(n -> n.setIdentifier("$variable"));
+    final String normalizedText = node.toString();
+
+    // 返値，メソッド名，メソッド全体の文字列, 正規化後の文字列，パスを利用してメソッドオブジェクトを生成
     final String returnType = returnTypeOptional.map(ASTNode::toString)
         .orElse("void");
     final String methodName = node.getName()
         .getIdentifier();
-    final String methodText = node.toString();
-
     final CompilationUnit rootNode = (CompilationUnit) node.getRoot();
     final int startLine = rootNode.getLineNumber(node.getStartPosition());
     final int endLine = rootNode.getLineNumber(node.getStartPosition() + node.getLength());
-    final JavaMethod method = new JavaMethod(returnType, methodName, methodText, path, startLine,
-        endLine, remoteUrl, commit.getName());
+    final JavaMethod method = new JavaMethod(returnType, methodName, rawText, normalizedText, path,
+        startLine, endLine, remoteUrl, commit.getName());
 
     // 引数の型を追加する
     for (final SingleVariableDeclaration parameter : parameters) {
@@ -328,38 +350,38 @@ public class JavaFileVisitor extends ASTVisitor {
   public boolean visit(final ArrayType node) {
     // 配列型のときは，ここでは対象の型かどうかの判定は行わない．
     // 要素である型にビジターを訪れたときに判定される．
-    return super.visit(node);
+    return false;
   }
 
   @Override
   public boolean visit(final IntersectionType node) {
     isTarget = false;
-    return super.visit(node);
+    return false;
   }
 
   @Override
   public boolean visit(final NameQualifiedType node) {
     isTarget = false;
-    return super.visit(node);
+    return false;
   }
 
   @Override
   public boolean visit(final ParameterizedType node) {
     // 型引数についてはなにもしない
-    return super.visit(node);
+    return false;
   }
 
   @Override
   public boolean visit(final PrimitiveType node) {
     // プリミティブ型は対象の型なので何もしない．
     // isTargetにtrueをいれると，もしそれまでにfalseになっている場合にその情報が失われてしまう．
-    return super.visit(node);
+    return false;
   }
 
   @Override
   public boolean visit(final QualifiedType node) {
     isTarget = false;
-    return super.visit(node);
+    return false;
   }
 
   @Override
@@ -370,18 +392,38 @@ public class JavaFileVisitor extends ASTVisitor {
         .anyMatch(c -> c.equals(typeName))) {
       isTarget = false;
     }
-    return super.visit(node);
+    return false;
   }
 
   @Override
   public boolean visit(final UnionType node) {
     isTarget = false;
-    return super.visit(node);
+    return false;
   }
 
   @Override
   public boolean visit(final WildcardType node) {
     isTarget = false;
-    return super.visit(node);
+    return false;
+  }
+
+  @Override
+  public boolean visit(final SimpleName node) {
+    System.out.println(node.getIdentifier());
+    if (!normalizationTargetNodesStack.isEmpty()) {
+      final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.peek();
+      normalizationTargetNodes.add(node);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean visit(final MethodInvocation node) {
+    final Optional<Expression> expression = Optional.ofNullable(node.getExpression());
+    expression.ifPresent(e -> e.accept(this));
+    node.arguments()
+        .stream()
+        .forEach(n -> ((ASTNode) n).accept(this));
+    return false;
   }
 }
