@@ -405,7 +405,6 @@ public class JavaFileVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(final SimpleName node) {
-    System.out.println(node.getIdentifier());
     if (!normalizationTargetNodesStack.isEmpty()) {
       final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.peek();
       normalizationTargetNodes.add(node);

@@ -82,9 +82,9 @@ public class JavaMethodDAO {
         statement.setString(10, method.commit);
         statement.setInt(11, -1);
         statement.setInt(12, -1);
+
         try {
           statement.execute();
-          connector.commit();
         } catch (final SQLiteException e) {
           final SQLiteErrorCode code = e.getResultCode();
           if (code.name()
@@ -97,6 +97,7 @@ public class JavaMethodDAO {
         }
       }
 
+      connector.commit();
       statement.close();
 
     } catch (final SQLException e) {
@@ -173,7 +174,6 @@ public class JavaMethodDAO {
 
     return false;
   }
-
 
   synchronized public void setTests(final int id, final String target_ESTest,
       final String target_ESTest_scaffolding) {
