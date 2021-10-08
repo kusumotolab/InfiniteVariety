@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.sqlite.SQLiteErrorCode;
@@ -255,6 +256,29 @@ public class JavaMethodDAO {
     return methods;
   }
 
+  synchronized public boolean isDifferentSyntax(final Set<Integer> methodIDs) {
+
+    try {
+      final PreparedStatement statement = connector.prepareStatement(
+          "select hash from methods where id = ?");
+      final Set<String> hashes = new HashSet<>();
+      for (Integer methodID : methodIDs) {
+        statement.setInt(1, methodID);
+        final ResultSet results = statement.executeQuery();
+        assert results.next() : "no such method ID.";
+        final byte[] hash = results.getBytes(1);
+        hashes.add(new String(hash, StandardCharsets.UTF_8));
+      }
+
+      System.out.println("hash size: " + hashes.size());
+      return 1 < hashes.size();
+
+    } catch (final SQLException e) {
+      e.printStackTrace();
+    }
+
+    return false;
+  }
 
   synchronized public void close() {
     try {

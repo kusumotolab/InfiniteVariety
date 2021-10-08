@@ -185,6 +185,7 @@ public class TestExecutor extends TestRunner {
         final List<Set<Integer>> groups = methodGroups.values()
             .stream()
             .distinct()
+            .filter(g -> JavaMethodDAO.SINGLETON.isDifferentSyntax(g))
             .collect(Collectors.toList());
         groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, groupID.getAndIncrement()));
       }
