@@ -88,7 +88,9 @@ public class Classifier {
         continue;
       }
 
-      final Path dir = outputPath.resolve(dirIndex.getAndIncrement() + "." + signature);
+      final String dirName = dirIndex.getAndIncrement() + "." + signature;
+      final String shortenDirName = 255 < dirName.length()? dirName.substring(0, 255): dirName;
+      final Path dir = outputPath.resolve(shortenDirName);
       try {
 
         // シグネチャを名前としてもつディレクトリを作成する
