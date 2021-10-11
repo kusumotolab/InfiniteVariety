@@ -88,8 +88,10 @@ public class Classifier {
         continue;
       }
 
-      final String dirName = dirIndex.getAndIncrement() + "." + signature;
-      final String shortenDirName = 255 < dirName.length()? dirName.substring(0, 255): dirName;
+      final String dirName = dirIndex.getAndIncrement() + "." + signature.replace(" ", "")
+          .replace("\t", "")
+          .replace(System.lineSeparator(), "");
+      final String shortenDirName = 255 < dirName.length() ? dirName.substring(0, 255) : dirName;
       final Path dir = outputPath.resolve(shortenDirName);
       try {
 
