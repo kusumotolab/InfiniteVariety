@@ -327,8 +327,6 @@ public class JavaFileVisitor extends ASTVisitor {
       return false;
     }
 
-    System.out.println(node.toString());
-
     // このメソッドの正規化文字列を取得
     final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.pop();
     normalizationTargetNodes.forEach(n -> n.setIdentifier("$variable"));
