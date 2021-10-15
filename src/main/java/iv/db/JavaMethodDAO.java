@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
+import org.sqlite.JDBC;
 import iv.IVConfig;
 import iv.data.JavaMethod;
 

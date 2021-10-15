@@ -23,6 +23,7 @@ import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedType;
+import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -275,6 +276,11 @@ public class JavaFileVisitor extends ASTVisitor {
   @Override
   public boolean visit(final MethodDeclaration node) {
 
+    // コンストラクタは対象外
+    if(node.isConstructor()){
+      return false;
+    }
+
     // 正規化する変数名を表すノードを記録するための処理
     normalizationTargetNodesStack.push(new ArrayList<SimpleName>());
 
@@ -283,7 +289,8 @@ public class JavaFileVisitor extends ASTVisitor {
         .removeIf(m -> m instanceof MarkerAnnotation || m instanceof NormalAnnotation);
 
     // 修飾子を削除
-    node.modifiers().removeIf(m -> m instanceof Modifier);
+    node.modifiers()
+        .removeIf(m -> m instanceof Modifier);
 
     // Javadocを削除
     Optional.ofNullable(node.getJavadoc())
@@ -298,6 +305,11 @@ public class JavaFileVisitor extends ASTVisitor {
     final List<SingleVariableDeclaration> parameters = (List<SingleVariableDeclaration>) node.parameters();
     final Optional<Block> bodyOptional = Optional.ofNullable(node.getBody());
 
+    // ボディが空なら条件を満たさない
+    if (bodyOptional.isEmpty()) {
+      normalizationTargetNodesStack.pop();
+      return false;
+    }
     //ビジターを利用して，返値と引数が条件を満たすかチェック
     isTarget = true;
     returnTypeOptional.ifPresent(r -> r.accept(this));
@@ -315,10 +327,13 @@ public class JavaFileVisitor extends ASTVisitor {
       return false;
     }
 
+    System.out.println(node.toString());
+
     // このメソッドの正規化文字列を取得
     final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.pop();
     normalizationTargetNodes.forEach(n -> n.setIdentifier("$variable"));
-    node.getName().setIdentifier("$method");
+    node.getName()
+        .setIdentifier("$method");
     final String normalizedText = node.toString();
 
     // 返値，メソッド名，メソッド全体の文字列, 正規化後の文字列，パスを利用してメソッドオブジェクトを生成
@@ -346,7 +361,7 @@ public class JavaFileVisitor extends ASTVisitor {
   public boolean visit(final ArrayType node) {
     // 配列型のときは，ここでは対象の型かどうかの判定は行わない．
     // 要素である型にビジターを訪れたときに判定される．
-    return false;
+    return super.visit(node);
   }
 
   @Override
@@ -364,14 +379,14 @@ public class JavaFileVisitor extends ASTVisitor {
   @Override
   public boolean visit(final ParameterizedType node) {
     // 型引数についてはなにもしない
-    return false;
+    return super.visit(node);
   }
 
   @Override
   public boolean visit(final PrimitiveType node) {
     // プリミティブ型は対象の型なので何もしない．
     // isTargetにtrueをいれると，もしそれまでにfalseになっている場合にその情報が失われてしまう．
-    return false;
+    return super.visit(node);
   }
 
   @Override
@@ -415,10 +430,42 @@ public class JavaFileVisitor extends ASTVisitor {
   @Override
   public boolean visit(final MethodInvocation node) {
     final Optional<Expression> expression = Optional.ofNullable(node.getExpression());
+    // メソッド呼び出しのプレフィックスがない場合には自クラスのメソッドを呼び出していることになるが，
+    // メソッド単体で切り出しているため他のメソッドはない．よってコンパイルできず対象外になる．
+    if (expression.isEmpty()) {
+      isTarget = false;
+      return false;
+    }
     expression.ifPresent(e -> e.accept(this));
     node.arguments()
         .stream()
         .forEach(n -> ((ASTNode) n).accept(this));
+    return false;
+  }
+
+  @Override
+  public boolean visit(final ReturnStatement node) {
+
+    // return文のオペランドがない場合はvoid返値であり対象外
+    final Expression operand = node.getExpression();
+    if (null == operand) {
+      isTarget = false;
+      return false;
+    }
+
+    // 以下の条件を全て満たす場合は対象外
+    // return文が一つだけのメソッド
+    // return文のオペランドが変数単体
+    final ASTNode parent = node.getParent();
+    final ASTNode grandParent = parent.getParent();
+    if (parent instanceof Block && 1 == ((Block) parent).statements()
+        .size() && MethodDeclaration.class == grandParent.getClass()
+        && SimpleName.class == operand.getClass()) {
+      isTarget = false;
+      return false;
+    }
+
+    operand.accept(this);
     return false;
   }
 }
