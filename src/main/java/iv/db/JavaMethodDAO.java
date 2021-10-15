@@ -275,7 +275,6 @@ public class JavaMethodDAO {
         hashes.add(new String(hash, StandardCharsets.UTF_8));
       }
 
-      System.out.println("hash size: " + hashes.size());
       return 1 < hashes.size();
 
     } catch (final SQLException e) {
