@@ -66,6 +66,10 @@ public class JavaMethodDAO {
 
   synchronized public void addMethods(final List<JavaMethod> methods) {
 
+    if(null == methods || 0 == methods.size()){
+      return;
+    }
+
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
           "insert into methods(signature, name, rtext, ntext, hash, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
