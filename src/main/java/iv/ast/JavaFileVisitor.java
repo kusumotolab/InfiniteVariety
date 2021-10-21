@@ -10,9 +10,17 @@ import java.util.stream.Stream;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ArrayType;
+import org.eclipse.jdt.core.dom.AssertStatement;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ContinueStatement;
+import org.eclipse.jdt.core.dom.DoStatement;
+import org.eclipse.jdt.core.dom.EmptyStatement;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.IntersectionType;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -27,9 +35,18 @@ import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.SynchronizedStatement;
+import org.eclipse.jdt.core.dom.ThrowStatement;
+import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.UnionType;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.WildcardType;
+import org.eclipse.jdt.core.dom.YieldStatement;
 import org.eclipse.jgit.revwalk.RevCommit;
 import iv.IVConfig;
 import iv.data.JavaMethod;
@@ -42,6 +59,7 @@ public class JavaFileVisitor extends ASTVisitor {
   private final String path;
   private final List<JavaMethod> javaMethods;
   private final Stack<List<SimpleName>> normalizationTargetNodesStack;
+  private final Stack<List<Statement>> statementsStack;
   private final String[] javalangClasses = new String[] {
       "AbstractMethodError",//
       "Appendable",//
@@ -267,6 +285,7 @@ public class JavaFileVisitor extends ASTVisitor {
     this.isTarget = true;
     this.javaMethods = new ArrayList<>();
     this.normalizationTargetNodesStack = new Stack<>();
+    this.statementsStack = new Stack<>();
   }
 
   public List<JavaMethod> getJavaMethods() {
@@ -324,7 +343,9 @@ public class JavaFileVisitor extends ASTVisitor {
 
     //ビジターを利用して，メソッドボディが条件を満たすかチェック
     //返値と引数のチェックのあとのif文を取り除いてはいけない
+    statementsStack.push(new ArrayList<Statement>());
     bodyOptional.ifPresent(b -> b.accept(this));
+    final List<Statement> statements = statementsStack.pop();
     if (!isTarget) {
       normalizationTargetNodesStack.pop();
       return false;
@@ -345,9 +366,9 @@ public class JavaFileVisitor extends ASTVisitor {
     final CompilationUnit rootNode = (CompilationUnit) node.getRoot();
     final int startLine = rootNode.getLineNumber(node.getStartPosition());
     final int endLine = rootNode.getLineNumber(node.getStartPosition() + node.getLength());
-    final JavaMethod method = new JavaMethod(returnType, methodName, rawText, normalizedText, path,
-        startLine, endLine, remoteUrl, commit.getName());
-
+    final JavaMethod method = new JavaMethod(returnType, methodName, rawText, normalizedText,
+        statements.size(), path, startLine, endLine, remoteUrl, commit.getName());
+    System.out.println("size := " + statements.size());
     // 引数の型を追加する
     for (final SingleVariableDeclaration parameter : parameters) {
       final Type type = parameter.getType();
@@ -447,6 +468,11 @@ public class JavaFileVisitor extends ASTVisitor {
   @Override
   public boolean visit(final ReturnStatement node) {
 
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
     // return文のオペランドがない場合はvoid返値であり対象外
     final Expression operand = node.getExpression();
     if (null == operand) {
@@ -468,5 +494,193 @@ public class JavaFileVisitor extends ASTVisitor {
 
     operand.accept(this);
     return false;
+  }
+
+  @Override
+  public boolean visit(final AssertStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final BreakStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final ContinueStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final DoStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final EmptyStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final ExpressionStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final ForStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final IfStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+
+  @Override
+  public void endVisit(final ReturnStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    super.endVisit(node);
+  }
+
+  @Override
+  public boolean visit(final SwitchStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final SynchronizedStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final ThrowStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final TypeDeclarationStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final TryStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final VariableDeclarationStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final WhileStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
+  }
+
+  @Override
+  public boolean visit(final YieldStatement node) {
+
+    if (!statementsStack.isEmpty()) {
+      statementsStack.peek()
+          .add(node);
+    }
+
+    return super.visit(node);
   }
 }

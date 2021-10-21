@@ -11,6 +11,7 @@ public class JavaMethod {
   public final String name;
   public final String rawText;
   public final String normalizedText;
+  public final int size;
   public final String path;
   public final int startLine;
   public final int endLine;
@@ -20,22 +21,24 @@ public class JavaMethod {
   private final List<String> parameters;
 
   public JavaMethod(final String returnType, final String name, final String rawText,
-      final String normalizedText,
-      final String path, final int startLine, final int endLine, final String repository,
+      final String normalizedText, final int size, final String path, final int startLine,
+      final int endLine, final String repository,
       final String commit) {
-    this(returnType, name, rawText, normalizedText, path, startLine, endLine, repository, commit,
+    this(returnType, name, rawText, normalizedText, size, path, startLine, endLine, repository,
+        commit,
         -1);
   }
 
   public JavaMethod(final String returnType, final String name, final String rawText,
-      final String normalizedText,
-      final String path, final int startLine, final int endLine, final String repository,
+      final String normalizedText, final int size, final String path, final int startLine,
+      final int endLine, final String repository,
       final String commit, final int id) {
     this.returnType = returnType;
     this.parameters = new ArrayList<>();
     this.name = name;
     this.rawText = rawText;
     this.normalizedText = normalizedText;
+    this.size = size;
     this.path = path;
     this.startLine = startLine;
     this.endLine = endLine;

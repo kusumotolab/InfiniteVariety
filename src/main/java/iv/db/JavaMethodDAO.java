@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
-import org.sqlite.JDBC;
 import iv.IVConfig;
 import iv.data.JavaMethod;
 
@@ -24,6 +23,7 @@ public class JavaMethodDAO {
       "name string, " + //
       "rtext blob, " + //
       "ntext blob, " + //
+      "size int, " + //
       "hash blob," + //
       "path string, " + //
       "start int, " + //
@@ -67,26 +67,27 @@ public class JavaMethodDAO {
 
   synchronized public void addMethods(final List<JavaMethod> methods) {
 
-    if(null == methods || 0 == methods.size()){
+    if (null == methods || 0 == methods.size()) {
       return;
     }
 
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods(signature, name, rtext, ntext, hash, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, rtext, ntext, size, hash, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
         statement.setBytes(3, method.rawText.getBytes());
         statement.setBytes(4, method.normalizedText.getBytes());
-        statement.setBytes(5, method.getMD5());
-        statement.setString(6, method.path);
-        statement.setInt(7, method.startLine);
-        statement.setInt(8, method.endLine);
-        statement.setString(9, method.repository);
-        statement.setString(10, method.commit);
-        statement.setInt(11, -1);
+        statement.setInt(5, method.size);
+        statement.setBytes(6, method.getMD5());
+        statement.setString(7, method.path);
+        statement.setInt(8, method.startLine);
+        statement.setInt(9, method.endLine);
+        statement.setString(10, method.repository);
+        statement.setString(11, method.commit);
         statement.setInt(12, -1);
+        statement.setInt(13, -1);
 
         try {
           statement.execute();
@@ -238,20 +239,21 @@ public class JavaMethodDAO {
     try {
       final Statement statement = connector.createStatement();
       final ResultSet results = statement.executeQuery(
-          "select name, rtext, ntext, path, start, end, repo, revision, id from methods where signature = \""
+          "select name, rtext, ntext, size, path, start, end, repo, revision, id from methods where signature = \""
               + signature + "\"");
       while (results.next()) {
         final String name = results.getString(1);
         final String rtext = new String(results.getBytes(2), StandardCharsets.UTF_8);
         final String ntext = new String(results.getBytes(3), StandardCharsets.UTF_8);
-        final String path = results.getString(4);
-        final int start = results.getInt(5);
-        final int end = results.getInt(6);
-        final String repo = results.getString(7);
-        final String commit = results.getString(8);
-        final int id = results.getInt(9);
-        final JavaMethod method = new JavaMethod(signature, name, rtext, ntext, path, start, end,
-            repo, commit, id);
+        final int size = results.getInt(4);
+        final String path = results.getString(5);
+        final int start = results.getInt(6);
+        final int end = results.getInt(7);
+        final String repo = results.getString(8);
+        final String commit = results.getString(9);
+        final int id = results.getInt(10);
+        final JavaMethod method = new JavaMethod(signature, name, rtext, ntext, size, path, start,
+            end, repo, commit, id);
         methods.add(method);
       }
     } catch (final SQLException e) {
