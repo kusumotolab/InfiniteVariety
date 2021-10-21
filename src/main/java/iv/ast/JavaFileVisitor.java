@@ -277,12 +277,17 @@ public class JavaFileVisitor extends ASTVisitor {
   public boolean visit(final MethodDeclaration node) {
 
     // コンストラクタは対象外
-    if(node.isConstructor()){
+    if (node.isConstructor()) {
       return false;
     }
 
     // 正規化する変数名を表すノードを記録するための処理
     normalizationTargetNodesStack.push(new ArrayList<SimpleName>());
+
+    // 返値，引数，ボディのノードを取得
+    final Optional<Type> returnTypeOptional = Optional.ofNullable(node.getReturnType2());
+    final List<SingleVariableDeclaration> parameters = (List<SingleVariableDeclaration>) node.parameters();
+    final Optional<Block> bodyOptional = Optional.ofNullable(node.getBody());
 
     // アノテーションを削除
     node.modifiers()
@@ -291,6 +296,9 @@ public class JavaFileVisitor extends ASTVisitor {
     // 修飾子を削除
     node.modifiers()
         .removeIf(m -> m instanceof Modifier);
+    parameters.stream()
+        .map(p -> p.modifiers())
+        .forEach(m -> m.clear());
 
     // Javadocを削除
     Optional.ofNullable(node.getJavadoc())
@@ -299,11 +307,6 @@ public class JavaFileVisitor extends ASTVisitor {
     //　このメソッドの生文字列を取り出しておく
     // この処理はnode.getBody()に対するビジター処理よりも先になければいけない
     final String rawText = node.toString();
-
-    // 返値，引数，ボディのノードを取得
-    final Optional<Type> returnTypeOptional = Optional.ofNullable(node.getReturnType2());
-    final List<SingleVariableDeclaration> parameters = (List<SingleVariableDeclaration>) node.parameters();
-    final Optional<Block> bodyOptional = Optional.ofNullable(node.getBody());
 
     // ボディが空なら条件を満たさない
     if (bodyOptional.isEmpty()) {
