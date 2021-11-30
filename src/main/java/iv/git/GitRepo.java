@@ -143,6 +143,7 @@ public class GitRepo {
     } catch (IOException e) {
       e.printStackTrace();
     }
+    System.out.println("total method count: " + extractor.getTotalMethodCount());
     return javaMethods;
   }
 }

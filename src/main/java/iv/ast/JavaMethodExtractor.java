@@ -3,6 +3,7 @@ package iv.ast;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
@@ -17,12 +18,14 @@ public class JavaMethodExtractor {
   private final IVConfig config;
   private final String remoteUrl;
   private final RevCommit commit;
+  private final AtomicLong totalMethodCount;
 
   public JavaMethodExtractor(final IVConfig config, final String remoteUrl,
       final RevCommit commit) {
     this.config = config;
     this.remoteUrl = remoteUrl;
     this.commit = commit;
+    this.totalMethodCount = new AtomicLong(0);
   }
 
   public List<JavaMethod> getJavaMethods(final String path, final String text) {
@@ -38,7 +41,12 @@ public class JavaMethodExtractor {
 
     final JavaFileVisitor visitor = new JavaFileVisitor(config, remoteUrl, commit, path);
     ast.accept(visitor);
+    totalMethodCount.addAndGet(visitor.getAllMethodCount());
     return visitor.getJavaMethods();
+  }
+
+  public long getTotalMethodCount(){
+    return totalMethodCount.get();
   }
 
   private ASTParser createNewParser() {

@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -58,6 +59,7 @@ public class JavaFileVisitor extends ASTVisitor {
   private final RevCommit commit;
   private final String path;
   private final List<JavaMethod> javaMethods;
+  private final AtomicInteger methodCount;
   private final Stack<List<SimpleName>> normalizationTargetNodesStack;
   private final Stack<List<Statement>> statementsStack;
   private final String[] javalangClasses = new String[] {
@@ -284,12 +286,17 @@ public class JavaFileVisitor extends ASTVisitor {
     this.path = path;
     this.isTarget = true;
     this.javaMethods = new ArrayList<>();
+    this.methodCount = new AtomicInteger(0);
     this.normalizationTargetNodesStack = new Stack<>();
     this.statementsStack = new Stack<>();
   }
 
   public List<JavaMethod> getJavaMethods() {
     return Collections.unmodifiableList(javaMethods);
+  }
+
+  public int getAllMethodCount(){
+    return methodCount.get();
   }
 
   @Override
@@ -299,6 +306,9 @@ public class JavaFileVisitor extends ASTVisitor {
     if (node.isConstructor()) {
       return false;
     }
+
+    // メソッド数をインクリメント
+    methodCount.getAndIncrement();
 
     // 正規化する変数名を表すノードを記録するための処理
     normalizationTargetNodesStack.push(new ArrayList<SimpleName>());
