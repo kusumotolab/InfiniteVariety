@@ -368,7 +368,7 @@ public class JavaFileVisitor extends ASTVisitor {
     final int endLine = rootNode.getLineNumber(node.getStartPosition() + node.getLength());
     final JavaMethod method = new JavaMethod(returnType, methodName, rawText, normalizedText,
         statements.size(), path, startLine, endLine, remoteUrl, commit.getName());
-    System.out.println("size := " + statements.size());
+
     // 引数の型を追加する
     for (final SingleVariableDeclaration parameter : parameters) {
       final Type type = parameter.getType();
