@@ -10,8 +10,8 @@ plugins {
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
-sourceCompatibility = '1.15'
-targetCompatibility = '1.15'
+sourceCompatibility = '1.11'
+targetCompatibility = '1.11'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -53,3 +53,11 @@ jar {
 shadowJar {
    // minimize()
 }
+
+//allprojects {
+//    gradle.projectsEvaluated {
+//        tasks.withType(JavaCompile) {
+//            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+//        }
+//    }
+//}
