@@ -75,6 +75,8 @@ public class TestExecutor extends TestRunner {
       final AtomicInteger groupID = new AtomicInteger(1);
 
       // 各カテゴリに対する処理のループ
+      // TODO このループを，指定された下限から上限の範囲のグループへのループに変更
+      // IVConfigに下限と条件を指定するためのオプションを指定する必要あり
       for (final Path groupDir : groupDirs) {
         final List<Path> targetDirs = Files.list(groupDir)
             .filter(Files::isDirectory)
@@ -172,6 +174,7 @@ public class TestExecutor extends TestRunner {
             .stream()
             .distinct()
             .collect(Collectors.toList());
+        // TODO メソッドのグループIDは，シグネチャが同じメソッドグループでリセットするように変更する
         groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, groupID.getAndIncrement()));
       }
 
