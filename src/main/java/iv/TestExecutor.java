@@ -9,6 +9,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.kohsuke.args4j.CmdLineException;
@@ -92,6 +95,10 @@ public class TestExecutor extends TestRunner {
         // 振る舞いが同じテスト群を格納するための入れ物を準備
         final Map<Integer, Set<Integer>> methodGroups = new HashMap<>();
 
+        // マルチスレッド管理
+        final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime()
+            .availableProcessors());
+
         // メソッドAを，メソッドBのテストケースを利用してテストする．
         for (int leftIndex = 0; leftIndex < compilableMethodDirs.size(); leftIndex++) {
 
@@ -116,69 +123,77 @@ public class TestExecutor extends TestRunner {
             final String rightTestDirName = rightSourceDirName + "_test";
             final Path rightTestDir = leftSourceDir.resolveSibling(rightTestDirName);
 
-            System.out.println("left source: " + leftSourceDir);
-            System.out.println("left test: " + leftTestDir);
-            System.out.println("right source: " + rightSourceDir);
-            System.out.println("right test: " + rightTestDir);
+            executorService.execute(new Runnable() {
 
-            final List<String> command = Arrays.asList("java",
-                "org.junit.runner.JUnitCore",
-                "Target_ESTest");
+              @Override
+              public void run() {
 
-            // leftのソースがrightのテストをパスするかを確認
-            final String classpath1 = getClassPath(leftSourceDir, rightTestDir);
-            final Map<String, String> environmentVariables1 = new HashMap<>();
-            environmentVariables1.put("CLASSPATH", classpath1);
-            final int junit1CommandExitValue = executeProcess(command, environmentVariables1);
-            if (junit1CommandExitValue != 0) {
-              continue;
-            }
+                //System.out.println("checking compatibility between " + leftSourceDirName + " and " + rightSourceDirName);
 
-            // rightのソースがleftのテストをパスするかを確認
-            final String classpath2 = getClassPath(rightSourceDir, leftTestDir);
-            final Map<String, String> environmentVariables2 = new HashMap<>();
-            environmentVariables2.put("CLASSPATH", classpath2);
-            final int junit2CommandExitValue = executeProcess(command, environmentVariables2);
-            if (junit2CommandExitValue != 0) {
-              continue;
-            }
+                final List<String> command = Arrays.asList("java",
+                    "org.junit.runner.JUnitCore",
+                    "Target_ESTest");
 
-            final int leftMethodID = Integer.valueOf(leftSourceDirName);
-            final int rightMethodID = Integer.valueOf(rightSourceDirName);
-            final Set<Integer> leftMethodGroup = methodGroups.get(leftMethodID);
-            final Set<Integer> rightMethodGroup = methodGroups.get(rightMethodID);
-            if (null == leftMethodGroup && null == rightMethodGroup) {
-              final Set<Integer> newGroup = new HashSet<>();
-              newGroup.add(leftMethodID);
-              newGroup.add(rightMethodID);
-              methodGroups.put(leftMethodID, newGroup);
-              methodGroups.put(rightMethodID, newGroup);
-            } else if (null != leftMethodGroup && null == rightMethodGroup) {
-              leftMethodGroup.add(rightMethodID);
-              methodGroups.put(rightMethodID, leftMethodGroup);
-            } else if (null == leftMethodGroup && null != rightMethodGroup) {
-              rightMethodGroup.add(leftMethodID);
-              methodGroups.put(leftMethodID, rightMethodGroup);
-            } else if (null != leftMethodGroup && null != rightMethodGroup
-                && leftMethodGroup != rightMethodGroup) {
-              rightMethodGroup.forEach(rMethodID -> {
-                leftMethodGroup.add(rMethodID);
-                methodGroups.remove(rMethodID);
-                methodGroups.put(rMethodID, leftMethodGroup);
-              });
-            }
+                // leftのソースがrightのテストをパスするかを確認
+                final String classpath1 = getClassPath(leftSourceDir, rightTestDir);
+                final Map<String, String> environmentVariables1 = new HashMap<>();
+                environmentVariables1.put("CLASSPATH", classpath1);
+                final int junit1CommandExitValue = executeProcess(command, environmentVariables1);
+                if (junit1CommandExitValue != 0) {
+                  return;
+                }
+
+                // rightのソースがleftのテストをパスするかを確認
+                final String classpath2 = getClassPath(rightSourceDir, leftTestDir);
+                final Map<String, String> environmentVariables2 = new HashMap<>();
+                environmentVariables2.put("CLASSPATH", classpath2);
+                final int junit2CommandExitValue = executeProcess(command, environmentVariables2);
+                if (junit2CommandExitValue != 0) {
+                  return;
+                }
+
+                final int leftMethodID = Integer.valueOf(leftSourceDirName);
+                final int rightMethodID = Integer.valueOf(rightSourceDirName);
+                final Set<Integer> leftMethodGroup = methodGroups.get(leftMethodID);
+                final Set<Integer> rightMethodGroup = methodGroups.get(rightMethodID);
+                if (null == leftMethodGroup && null == rightMethodGroup) {
+                  final Set<Integer> newGroup = new HashSet<>();
+                  newGroup.add(leftMethodID);
+                  newGroup.add(rightMethodID);
+                  methodGroups.put(leftMethodID, newGroup);
+                  methodGroups.put(rightMethodID, newGroup);
+                } else if (null != leftMethodGroup && null == rightMethodGroup) {
+                  leftMethodGroup.add(rightMethodID);
+                  methodGroups.put(rightMethodID, leftMethodGroup);
+                } else if (null == leftMethodGroup && null != rightMethodGroup) {
+                  rightMethodGroup.add(leftMethodID);
+                  methodGroups.put(leftMethodID, rightMethodGroup);
+                } else if (null != leftMethodGroup && null != rightMethodGroup
+                    && leftMethodGroup != rightMethodGroup) {
+                  rightMethodGroup.forEach(rMethodID -> {
+                    leftMethodGroup.add(rMethodID);
+                    methodGroups.remove(rMethodID);
+                    methodGroups.put(rMethodID, leftMethodGroup);
+                  });
+                }
+              }
+            });
           }
         }
+
+        executorService.shutdown();
+        executorService.awaitTermination(10, TimeUnit.MINUTES);
 
         final List<Set<Integer>> groups = methodGroups.values()
             .stream()
             .distinct()
+            .filter(g -> JavaMethodDAO.SINGLETON.isDifferentSyntax(g))
             .collect(Collectors.toList());
         // TODO メソッドのグループIDは，シグネチャが同じメソッドグループでリセットするように変更する
         groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, groupID.getAndIncrement()));
       }
 
-    } catch (final IOException e) {
+    } catch (final IOException | InterruptedException e) {
       e.printStackTrace();
       System.exit(0);
     }

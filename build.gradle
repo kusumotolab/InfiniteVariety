@@ -1,6 +1,7 @@
 // Apply the java-library plugin to add support for Java Library
 plugins {
     id 'java'
+    id 'application'
     id 'eclipse'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
@@ -9,8 +10,8 @@ plugins {
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
-sourceCompatibility = '1.15'
-targetCompatibility = '1.15'
+sourceCompatibility = '1.11'
+targetCompatibility = '1.11'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -26,20 +27,37 @@ dependencies {
     implementation group: 'org.eclipse.jdt', name: 'org.eclipse.jdt.core', version: '3.26.0'
     implementation group: 'args4j', name: 'args4j', version: '2.33'
     implementation group: 'commons-codec', name: 'commons-codec', version: '1.15'
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.32'
     implementation group: 'org.xerial', name: 'sqlite-jdbc', version: '3.36.0.1'
-
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.20.2'
+    testImplementation group: 'org.mockito', name: 'mockito-core', version: '3.12.4'
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.5'
 }
 
+application {
+    mainClass = 'iv.JarEntryPoint'
+}
+
 jar {
+//    from {
+//        dependencies.implementation.collect {
+//            it.isDirectory() ? it : zipTree(it)
+//        }
+//    }
     manifest {
         attributes "Main-Class": "iv.JarEntryPoint"
     }
 }
 
 shadowJar {
-    minimize()
+   // minimize()
 }
+
+//allprojects {
+//    gradle.projectsEvaluated {
+//        tasks.withType(JavaCompile) {
+//            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+//        }
+//    }
+//}

@@ -58,7 +58,7 @@ public abstract class TestRunner {
       int size = -1;
       try {
         while ((size = in.read(buf, 0, BUF_SIZE)) != -1) {
-          out.write(buf, 0, size);
+          //out.write(buf, 0, size); 出力うっとおしいのでコメントアウト
         }
       } catch (final IOException e) {
         e.printStackTrace();

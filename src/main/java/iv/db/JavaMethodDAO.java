@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.sqlite.SQLiteErrorCode;
@@ -20,7 +21,10 @@ public class JavaMethodDAO {
 
   static public final String METHODS_SCHEMA = "signature string, " + //
       "name string, " + //
-      "text blob, " + //
+      "rtext blob, " + //
+      "ntext blob, " + //
+      "size int, " + //
+      "hash blob," + //
       "path string, " + //
       "start int, " + //
       "end int, " + //
@@ -63,23 +67,30 @@ public class JavaMethodDAO {
 
   synchronized public void addMethods(final List<JavaMethod> methods) {
 
+    if (null == methods || 0 == methods.size()) {
+      return;
+    }
+
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods(signature, name, text, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, rtext, ntext, size, hash, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
-        statement.setBytes(3, method.text.getBytes());
-        statement.setString(4, method.path);
-        statement.setInt(5, method.startLine);
-        statement.setInt(6, method.endLine);
-        statement.setString(7, method.repository);
-        statement.setString(8, method.commit);
-        statement.setInt(9, -1);
-        statement.setInt(10, -1);
+        statement.setBytes(3, method.rawText.getBytes());
+        statement.setBytes(4, method.normalizedText.getBytes());
+        statement.setInt(5, method.size);
+        statement.setBytes(6, method.getMD5());
+        statement.setString(7, method.path);
+        statement.setInt(8, method.startLine);
+        statement.setInt(9, method.endLine);
+        statement.setString(10, method.repository);
+        statement.setString(11, method.commit);
+        statement.setInt(12, -1);
+        statement.setInt(13, -1);
+
         try {
           statement.execute();
-          connector.commit();
         } catch (final SQLiteException e) {
           final SQLiteErrorCode code = e.getResultCode();
           if (code.name()
@@ -92,6 +103,7 @@ public class JavaMethodDAO {
         }
       }
 
+      connector.commit();
       statement.close();
 
     } catch (final SQLException e) {
@@ -169,7 +181,6 @@ public class JavaMethodDAO {
     return false;
   }
 
-
   synchronized public void setTests(final int id, final String target_ESTest,
       final String target_ESTest_scaffolding) {
 
@@ -186,10 +197,11 @@ public class JavaMethodDAO {
     }
   }
 
-  synchronized public void setGroup(final Set<Integer> methodIDs, final int groupID){
+  synchronized public void setGroup(final Set<Integer> methodIDs, final int groupID) {
 
-    try{
-      final PreparedStatement statement = connector.prepareStatement("update methods set groupID = ? where id = ?");
+    try {
+      final PreparedStatement statement = connector.prepareStatement(
+          "update methods set groupID = ? where id = ?");
       for (final Integer methodID : methodIDs) {
         statement.setInt(1, groupID);
         statement.setInt(2, methodID);
@@ -197,7 +209,7 @@ public class JavaMethodDAO {
       }
       statement.executeBatch();
       connector.commit();
-    }catch(final SQLException e){
+    } catch (final SQLException e) {
       e.printStackTrace();
     }
   }
@@ -227,19 +239,21 @@ public class JavaMethodDAO {
     try {
       final Statement statement = connector.createStatement();
       final ResultSet results = statement.executeQuery(
-          "select name, text, path, start, end, repo, revision, id from methods where signature = \""
+          "select name, rtext, ntext, size, path, start, end, repo, revision, id from methods where signature = \""
               + signature + "\"");
       while (results.next()) {
         final String name = results.getString(1);
-        final String text = new String(results.getBytes(2), StandardCharsets.UTF_8);
-        final String path = results.getString(3);
-        final int start = results.getInt(4);
-        final int end = results.getInt(5);
-        final String repo = results.getString(6);
-        final String commit = results.getString(7);
-        final int id = results.getInt(8);
-        final JavaMethod method = new JavaMethod(signature, name, text, path, start, end, repo,
-            commit, id);
+        final String rtext = new String(results.getBytes(2), StandardCharsets.UTF_8);
+        final String ntext = new String(results.getBytes(3), StandardCharsets.UTF_8);
+        final int size = results.getInt(4);
+        final String path = results.getString(5);
+        final int start = results.getInt(6);
+        final int end = results.getInt(7);
+        final String repo = results.getString(8);
+        final String commit = results.getString(9);
+        final int id = results.getInt(10);
+        final JavaMethod method = new JavaMethod(signature, name, rtext, ntext, size, path, start,
+            end, repo, commit, id);
         methods.add(method);
       }
     } catch (final SQLException e) {
@@ -249,6 +263,28 @@ public class JavaMethodDAO {
     return methods;
   }
 
+  synchronized public boolean isDifferentSyntax(final Set<Integer> methodIDs) {
+
+    try {
+      final PreparedStatement statement = connector.prepareStatement(
+          "select hash from methods where id = ?");
+      final Set<String> hashes = new HashSet<>();
+      for (Integer methodID : methodIDs) {
+        statement.setInt(1, methodID);
+        final ResultSet results = statement.executeQuery();
+        assert results.next() : "no such method ID.";
+        final byte[] hash = results.getBytes(1);
+        hashes.add(new String(hash, StandardCharsets.UTF_8));
+      }
+
+      return 1 < hashes.size();
+
+    } catch (final SQLException e) {
+      e.printStackTrace();
+    }
+
+    return false;
+  }
 
   synchronized public void close() {
     try {
