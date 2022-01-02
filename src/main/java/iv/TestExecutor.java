@@ -75,12 +75,30 @@ public class TestExecutor extends TestRunner {
           .filter(Files::isDirectory)
           .collect(Collectors.toList());
 
-      final AtomicInteger groupID = new AtomicInteger(1);
-
       // 各カテゴリに対する処理のループ
       // TODO このループを，指定された下限から上限の範囲のグループへのループに変更
       // IVConfigに下限と条件を指定するためのオプションを指定する必要あり
+      final int lowerBound = config.getLowerBound();
+      final int upperBound = config.getUpperBound();
       for (final Path groupDir : groupDirs) {
+
+        // TODO 対象のメソッドグループ以外の処理をしないように変更．
+        // TODO 実装はしたが，テストはまだ．
+        final String groupDirName = groupDir.getFileName()
+            .toString();
+        if(!groupDirName.contains(".")){
+          System.out.println(groupDirName + " is not a directory for method group");
+          continue;
+        }
+        final int groupID = Integer.valueOf(groupDirName.substring(0, groupDirName.indexOf('.')));
+        if(groupID < lowerBound || upperBound < groupID){
+          continue;
+        }
+
+        // TODO メソッドのグループIDは，シグネチャが同じグループ内でリセットするように変更済み．
+        // TODO 実装はしたが，テストはまだ．
+        final AtomicInteger methodGroupID = new AtomicInteger(1);
+
         final List<Path> targetDirs = Files.list(groupDir)
             .filter(Files::isDirectory)
             .collect(Collectors.toList());
@@ -190,7 +208,7 @@ public class TestExecutor extends TestRunner {
             .filter(g -> JavaMethodDAO.SINGLETON.isDifferentSyntax(g))
             .collect(Collectors.toList());
         // TODO メソッドのグループIDは，シグネチャが同じメソッドグループでリセットするように変更する
-        groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, groupID.getAndIncrement()));
+        groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, methodGroupID.getAndIncrement()));
       }
 
     } catch (final IOException | InterruptedException e) {

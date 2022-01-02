@@ -10,6 +10,8 @@ public class IVConfig {
   private Path outputPath = null;
   private Path repoPath = null;
   private JavaVersion javaVersion = JavaVersion.V1_8;
+  private int lowerBound = 0;
+  private int upperBound = Integer.MAX_VALUE;
 
   public Path getDatabase() {
     return this.dbPath;
@@ -60,4 +62,32 @@ public class IVConfig {
   }
 
   // TODO ループの上限および下限を指定するためのオプションを追加する必要あり
+  // TODO とりあえず実装した．テストはまだ．
+  public int getLowerBound() {
+    return this.lowerBound;
+  }
+
+  @Option(name = "-l", required = false, aliases = "--lower-bound", metaVar = "<lowerBound>",
+      usage = "lower bound of target method groups")
+  public void setTargetLowerBound(final int lowerBound) {
+    if(lowerBound < 0){
+      System.err.println("an positive integer must be specified for target lower bound.");
+      System.exit(0);
+    }
+    this.lowerBound = lowerBound;
+  }
+
+  public int getUpperBound() {
+    return this.upperBound;
+  }
+
+  @Option(name = "-u", required = false, aliases = "--upper-bound", metaVar = "<upperBound>",
+      usage = "upper bound of target method groups")
+  public void setTargetUpperBound(final int upperBound) {
+    if(upperBound < 0){
+      System.err.println("an positive integer must be specified for target upper bound.");
+      System.exit(0);
+    }
+    this.upperBound = upperBound;
+  }
 }
