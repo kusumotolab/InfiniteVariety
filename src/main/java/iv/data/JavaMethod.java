@@ -4,6 +4,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.jgit.revwalk.RevCommit;
 
 public class JavaMethod {
 
@@ -23,10 +24,9 @@ public class JavaMethod {
   public JavaMethod(final String returnType, final String name, final String rawText,
       final String normalizedText, final int size, final String path, final int startLine,
       final int endLine, final String repository,
-      final String commit) {
-    this(returnType, name, rawText, normalizedText, size, path, startLine, endLine, repository,
-        commit,
-        -1);
+      final RevCommit commit) {
+    this(returnType, name, rawText, normalizedText, size, path, startLine, endLine,
+        null != repository ? repository : "", null != commit ? commit.getName() : "", -1);
   }
 
   public JavaMethod(final String returnType, final String name, final String rawText,
@@ -43,7 +43,7 @@ public class JavaMethod {
     this.startLine = startLine;
     this.endLine = endLine;
     this.repository = repository;
-    this.commit = commit;
+    this.commit = "";
     this.id = id;
   }
 
