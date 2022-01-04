@@ -333,8 +333,10 @@ public class JavaFileVisitor extends ASTVisitor {
     Optional.ofNullable(node.getJavadoc())
         .ifPresent(j -> j.delete());
 
-    //　このメソッドの生文字列を取り出しておく
+    //　このメソッドの名前と生文字列を取り出しておく
     // この処理はnode.getBody()に対するビジター処理よりも先になければいけない
+    final String methodName = node.getName()
+        .getIdentifier();
     final String rawText = node.toString();
 
     // ボディが空なら条件を満たさない
@@ -371,8 +373,6 @@ public class JavaFileVisitor extends ASTVisitor {
     // 返値，メソッド名，メソッド全体の文字列, 正規化後の文字列，パスを利用してメソッドオブジェクトを生成
     final String returnType = returnTypeOptional.map(ASTNode::toString)
         .orElse("void");
-    final String methodName = node.getName()
-        .getIdentifier();
     final CompilationUnit rootNode = (CompilationUnit) node.getRoot();
     final int startLine = rootNode.getLineNumber(node.getStartPosition());
     final int endLine = rootNode.getLineNumber(node.getStartPosition() + node.getLength());
