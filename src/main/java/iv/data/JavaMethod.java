@@ -26,7 +26,7 @@ public class JavaMethod {
       final int endLine, final String repository,
       final RevCommit commit) {
     this(returnType, name, rawText, normalizedText, size, path, startLine, endLine,
-        null != repository ? repository : "", null != commit ? commit.getName() : "", -1);
+        repository, null != commit ? commit.getName() : null, -1);
   }
 
   public JavaMethod(final String returnType, final String name, final String rawText,
@@ -43,7 +43,7 @@ public class JavaMethod {
     this.startLine = startLine;
     this.endLine = endLine;
     this.repository = repository;
-    this.commit = "";
+    this.commit = commit;
     this.id = id;
   }
 
@@ -77,11 +77,17 @@ public class JavaMethod {
     lines.add("public class " + className + " {");
     lines.add("");
 
-    lines.add("    // repository: " + repository);
-    lines.add("    // commit: " + commit);
+    if (null != repository) {
+      lines.add("    // repository: " + repository);
+    }
+    if (null != commit) {
+      lines.add("    // commit: " + commit);
+    }
     lines.add("    // path: " + path);
     lines.add("    // lines: " + startLine + " to " + endLine);
-    lines.add("    // permalink: " + getPermalink());
+    if (null != repository && null != commit) {
+      lines.add("    // permalink: " + getPermalink());
+    }
     for (final String line : rawText.split(System.lineSeparator())) {
       lines.add("    " + line.replace(name + "(", "__target__("));
     }
