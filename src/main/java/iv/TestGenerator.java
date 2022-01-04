@@ -81,7 +81,9 @@ public class TestGenerator extends TestRunner {
       // TODO このループを，指定された下限から上限の範囲のグループへのループに変更
       // IVConfigに下限と条件を指定するためのオプションを指定する必要あり
       final int lowerBound = config.getLowerBound();
+      System.out.println("target lower bound is set to " + lowerBound);
       final int upperBound = config.getUpperBound();
+      System.out.println("target upper bound is set to " + upperBound);
       for (final Path groupDir : groupDirs) {
 
         // TODO 対象のメソッドグループ以外の処理をしないように変更．
