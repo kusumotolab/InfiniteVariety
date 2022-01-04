@@ -74,7 +74,7 @@ public class Classifier {
     JavaMethodDAO.SINGLETON.initialize(config);
     final List<String> signatures = JavaMethodDAO.SINGLETON.getSignatures();
 
-    final AtomicInteger dirIndex = new AtomicInteger(1);
+    final AtomicInteger dirIndex = new AtomicInteger(0);
     for (final String signature : signatures) {
 
       // 返値がないメソッド，引数がないメソッドは除外
@@ -88,7 +88,7 @@ public class Classifier {
         continue;
       }
 
-      final String dirName = dirIndex.getAndIncrement() + "." + signature.replace(" ", "")
+      final String dirName = dirIndex.incrementAndGet() + "." + signature.replace(" ", "")
           .replace("\t", "")
           .replace(System.lineSeparator(), "");
       final String shortenDirName = 255 < dirName.length() ? dirName.substring(0, 255) : dirName;
@@ -106,6 +106,9 @@ public class Classifier {
           final Path file = subDir.resolve(fileName + ".java");
           Files.writeString(file, method.getClassText(fileName), StandardCharsets.UTF_8);
         }
+
+        System.out.println("target methods have been classified into " + dirIndex.get() + " groups.");
+
       } catch (final IOException e) {
         e.printStackTrace();
       }
