@@ -9,6 +9,7 @@ public class IVConfig {
   private Path dbPath = null;
   private Path outputPath = null;
   private Path repoPath = null;
+  private Path filePath = null;
   private JavaVersion javaVersion = JavaVersion.V1_8;
   private int lowerBound = 0;
   private int upperBound = Integer.MAX_VALUE;
@@ -43,6 +44,17 @@ public class IVConfig {
       usage = "path to Git repository")
   public void setRepoPath(final String path) {
     this.repoPath = Paths.get(path)
+        .toAbsolutePath();
+  }
+
+  public Path getFilePath(){
+    return this.filePath;
+  }
+
+  @Option(name = "-f", required = false, aliases = "--file", metaVar = "<file>",
+      usage = "path to file or directory")
+  public void setFilePath(final String path) {
+    this.filePath = Paths.get(path)
         .toAbsolutePath();
   }
 
