@@ -5,7 +5,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,14 +95,19 @@ public class TestGenerator extends TestRunner {
         // TODO 実装はしたが，テストはまだ．
         final String groupDirName = groupDir.getFileName()
             .toString();
-        if(!groupDirName.contains(".")){
+        if (!groupDirName.contains(".")) {
           System.out.println(groupDirName + " is not a directory for method group");
           continue;
         }
         final int groupID = Integer.valueOf(groupDirName.substring(0, groupDirName.indexOf('.')));
-        if(groupID < lowerBound || upperBound < groupID){
+        if (groupID < lowerBound || upperBound < groupID) {
           continue;
         }
+
+        final LocalDateTime localDate = LocalDateTime.now();
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        final String formattedTime = localDate.format(formatter);
+        System.out.println(formattedTime + " generating test cases for " + groupDir.getFileName());
 
         final List<Path> targetDirs = Files.list(groupDir)
             .filter(Files::isDirectory)

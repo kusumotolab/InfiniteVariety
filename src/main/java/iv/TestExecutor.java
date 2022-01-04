@@ -3,6 +3,8 @@ package iv;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,6 +98,11 @@ public class TestExecutor extends TestRunner {
         if(groupID < lowerBound || upperBound < groupID){
           continue;
         }
+
+        final LocalDateTime localDate = LocalDateTime.now();
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+        final String formattedTime = localDate.format(formatter);
+        System.out.println(formattedTime + " executing test cases for " + groupDir.getFileName());
 
         // TODO メソッドのグループIDは，シグネチャが同じグループ内でリセットするように変更済み．
         // TODO 実装はしたが，テストはまだ．
