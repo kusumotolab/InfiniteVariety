@@ -107,13 +107,12 @@ public class Classifier {
           Files.writeString(file, method.getClassText(fileName), StandardCharsets.UTF_8);
         }
 
-        System.out.println(
-            "target methods have been classified into " + dirIndex.get() + " groups.");
-
       } catch (final IOException e) {
         e.printStackTrace();
       }
     }
+
+    System.out.println("target methods have been classified into " + dirIndex.get() + " groups.");
   }
 }
 
