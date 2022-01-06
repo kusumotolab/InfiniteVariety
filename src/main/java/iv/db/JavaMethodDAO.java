@@ -9,9 +9,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import org.sqlite.SQLiteErrorCode;
 import org.sqlite.SQLiteException;
 import iv.IVConfig;
@@ -234,7 +237,12 @@ public class JavaMethodDAO {
 
   synchronized public List<JavaMethod> getMethods(final String signature) {
 
-    final List<JavaMethod> methods = new ArrayList<>();
+    final Set<JavaMethod> methods = new TreeSet<>(new Comparator<JavaMethod>() {
+      @Override
+      public int compare(final JavaMethod o1, final JavaMethod o2) {
+        return o1.normalizedText.compareTo(o2.normalizedText);
+      }
+    });
 
     try {
       final Statement statement = connector.createStatement();
@@ -260,7 +268,8 @@ public class JavaMethodDAO {
       e.printStackTrace();
     }
 
-    return methods;
+    return methods.stream()
+        .collect(Collectors.toList());
   }
 
   synchronized public boolean isDifferentSyntax(final Set<Integer> methodIDs) {
