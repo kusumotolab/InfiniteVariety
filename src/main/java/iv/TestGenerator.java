@@ -90,9 +90,7 @@ public class TestGenerator extends TestRunner {
       System.out.println("target lower bound is set to " + lowerBound);
       final int upperBound = config.getUpperBound();
       System.out.println("target upper bound is set to " + upperBound);
-      final AtomicInteger groupIndexGenerator = new AtomicInteger(1);
       for (final Path groupDir : groupDirs) {
-        final int groupIndex = groupIndexGenerator.getAndIncrement();
 
         // TODO 対象のメソッドグループ以外の処理をしないように変更．
         // TODO 実装はしたが，テストはまだ．
@@ -151,10 +149,8 @@ public class TestGenerator extends TestRunner {
               final String formattedTime = localDate.format(formatter);
               final StringBuilder text = new StringBuilder();
               text.append(formattedTime);
-              text.append(" [");
-              text.append(groupIndex);
-              text.append("/");
-              text.append(groupDirs.size());
+              text.append(" [group ");
+              text.append(groupID);
               text.append("][");
               text.append(targetIndex);
               text.append("/");
