@@ -101,11 +101,6 @@ public class TestExecutor extends TestRunner {
           continue;
         }
 
-        final LocalDateTime localDate = LocalDateTime.now();
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-        final String formattedTime = localDate.format(formatter);
-        System.out.println(formattedTime + " executing test cases for " + groupDir.getFileName());
-
         // TODO メソッドのグループIDは，シグネチャが同じグループ内でリセットするように変更済み．
         // TODO 実装はしたが，テストはまだ．
         final AtomicInteger methodGroupID = new AtomicInteger(1);
@@ -133,7 +128,6 @@ public class TestExecutor extends TestRunner {
             compilableMethodDirs.size() * (compilableMethodDirs.size() - 1) / 2;
         final AtomicInteger processingIndexGenerator = new AtomicInteger(1);
         for (int leftIndex = 0; leftIndex < compilableMethodDirs.size(); leftIndex++) {
-          final int processingIndex = processingIndexGenerator.getAndIncrement();
 
           // leftのソースディレクトリおよびテストディレクトリを取得
           final Path leftSourceDir = compilableMethodDirs.get(leftIndex);
@@ -149,6 +143,8 @@ public class TestExecutor extends TestRunner {
               continue;
             }
 
+            final int processingIndex = processingIndexGenerator.getAndIncrement();
+            
             // rightのソースディレクトリおよびテストディレクトリを取得
             final Path rightSourceDir = compilableMethodDirs.get(rightIndex);
             final String rightSourceDirName = rightSourceDir.getFileName()
