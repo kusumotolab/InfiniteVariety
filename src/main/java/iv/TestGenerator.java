@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -89,7 +90,9 @@ public class TestGenerator extends TestRunner {
       System.out.println("target lower bound is set to " + lowerBound);
       final int upperBound = config.getUpperBound();
       System.out.println("target upper bound is set to " + upperBound);
+      final AtomicInteger groupIndexGenerator = new AtomicInteger(1);
       for (final Path groupDir : groupDirs) {
+        final int groupIndex = groupIndexGenerator.getAndIncrement();
 
         // TODO 対象のメソッドグループ以外の処理をしないように変更．
         // TODO 実装はしたが，テストはまだ．
@@ -104,17 +107,14 @@ public class TestGenerator extends TestRunner {
           continue;
         }
 
-        final LocalDateTime localDate = LocalDateTime.now();
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-        final String formattedTime = localDate.format(formatter);
-        System.out.println(formattedTime + " generating test cases for " + groupDir.getFileName());
-
         final List<Path> targetDirs = Files.list(groupDir)
             .filter(Files::isDirectory)
             .collect(Collectors.toList());
 
         // 各対象クラス（メソッド）に対する処理のループ
+        final AtomicInteger targetIndexGenerator = new AtomicInteger(1);
         for (final Path targetDir : targetDirs) {
+          final int targetIndex = targetIndexGenerator.getAndIncrement();
 
           // ディレクトリ名がメソッドIDでない場合は対象メソッドではないからスキップ
           final String targetDirName = targetDir.getFileName()
@@ -144,6 +144,24 @@ public class TestGenerator extends TestRunner {
                   return;
                 }
               }
+
+              final LocalDateTime localDate = LocalDateTime.now();
+              final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                  "yyyy/MM/dd HH:mm:ss");
+              final String formattedTime = localDate.format(formatter);
+              final StringBuilder text = new StringBuilder();
+              text.append(formattedTime);
+              text.append(" [");
+              text.append(groupIndex);
+              text.append("/");
+              text.append(groupDirs.size());
+              text.append("][");
+              text.append(targetIndex);
+              text.append("/");
+              text.append(targetDirs.size());
+              text.append("] generating test cases for ");
+              text.append(groupDir.getFileName());
+              System.out.println(text.toString());
 
               // 対象のメソッドのテストを生成
               final Path testDir = Paths.get(targetDir + "_test");

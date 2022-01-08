@@ -84,18 +84,20 @@ public class TestExecutor extends TestRunner {
       System.out.println("target lower bound is set to " + lowerBound);
       final int upperBound = config.getUpperBound();
       System.out.println("target upper bound is set to " + upperBound);
+      final AtomicInteger groupIndexGenerator = new AtomicInteger(1);
       for (final Path groupDir : groupDirs) {
+        final int groupIndex = groupIndexGenerator.getAndIncrement();
 
         // TODO 対象のメソッドグループ以外の処理をしないように変更．
         // TODO 実装はしたが，テストはまだ．
         final String groupDirName = groupDir.getFileName()
             .toString();
-        if(!groupDirName.contains(".")){
+        if (!groupDirName.contains(".")) {
           System.out.println(groupDirName + " is not a directory for method group");
           continue;
         }
         final int groupID = Integer.valueOf(groupDirName.substring(0, groupDirName.indexOf('.')));
-        if(groupID < lowerBound || upperBound < groupID){
+        if (groupID < lowerBound || upperBound < groupID) {
           continue;
         }
 
@@ -127,7 +129,11 @@ public class TestExecutor extends TestRunner {
             .availableProcessors());
 
         // メソッドAを，メソッドBのテストケースを利用してテストする．
+        final int numberOfProcessing =
+            compilableMethodDirs.size() * (compilableMethodDirs.size() - 1) / 2;
+        final AtomicInteger processingIndexGenerator = new AtomicInteger(1);
         for (int leftIndex = 0; leftIndex < compilableMethodDirs.size(); leftIndex++) {
+          final int processingIndex = processingIndexGenerator.getAndIncrement();
 
           // leftのソースディレクトリおよびテストディレクトリを取得
           final Path leftSourceDir = compilableMethodDirs.get(leftIndex);
@@ -155,7 +161,25 @@ public class TestExecutor extends TestRunner {
               @Override
               public void run() {
 
-                //System.out.println("checking compatibility between " + leftSourceDirName + " and " + rightSourceDirName);
+                final LocalDateTime localDate = LocalDateTime.now();
+                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+                    "yyyy/MM/dd HH:mm:ss");
+                final String formattedTime = localDate.format(formatter);
+                final StringBuilder text = new StringBuilder();
+                text.append(formattedTime);
+                text.append(" [");
+                text.append(groupIndex);
+                text.append("/");
+                text.append(groupDirs.size());
+                text.append("][");
+                text.append(processingIndex);
+                text.append("/");
+                text.append(numberOfProcessing);
+                text.append("] checking compatibility between ");
+                text.append(leftSourceDirName);
+                text.append(" and ");
+                text.append(rightSourceDirName);
+                System.out.println(text.toString());
 
                 final List<String> command = Arrays.asList("java",
                     "org.junit.runner.JUnitCore",
