@@ -13,6 +13,7 @@ public class IVConfig {
   private JavaVersion javaVersion = JavaVersion.V1_8;
   private int lowerBound = 0;
   private int upperBound = Integer.MAX_VALUE;
+  private int startGroupID = 0;
 
   public Path getDatabase() {
     return this.dbPath;
@@ -47,7 +48,7 @@ public class IVConfig {
         .toAbsolutePath();
   }
 
-  public Path getFilePath(){
+  public Path getFilePath() {
     return this.filePath;
   }
 
@@ -82,7 +83,7 @@ public class IVConfig {
   @Option(name = "-l", required = false, aliases = "--lower-bound", metaVar = "<lowerBound>",
       usage = "lower bound of target method groups")
   public void setTargetLowerBound(final int lowerBound) {
-    if(lowerBound < 0){
+    if (lowerBound < 0) {
       System.err.println("an positive integer must be specified for target lower bound.");
       System.exit(0);
     }
@@ -96,10 +97,24 @@ public class IVConfig {
   @Option(name = "-u", required = false, aliases = "--upper-bound", metaVar = "<upperBound>",
       usage = "upper bound of target method groups")
   public void setTargetUpperBound(final int upperBound) {
-    if(upperBound < 0){
+    if (upperBound < 0) {
       System.err.println("an positive integer must be specified for target upper bound.");
       System.exit(0);
     }
     this.upperBound = upperBound;
+  }
+
+  public int getStartGroupID() {
+    return this.startGroupID;
+  }
+
+  @Option(name = "-g", required = false, aliases = "--group-id", metaVar = "<groupID>",
+      usage = "start group ID")
+  public void setStartGroupID(final int startGroupID) {
+    if (startGroupID < 0) {
+      System.err.println("an positive integer must be specified for start group ID.");
+      System.exit(0);
+    }
+    this.startGroupID = startGroupID;
   }
 }

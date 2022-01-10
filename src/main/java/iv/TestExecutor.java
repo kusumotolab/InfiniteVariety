@@ -84,6 +84,12 @@ public class TestExecutor extends TestRunner {
       System.out.println("target lower bound is set to " + lowerBound);
       final int upperBound = config.getUpperBound();
       System.out.println("target upper bound is set to " + upperBound);
+
+      // TODO メソッドのグループIDは，シグネチャが同じグループ内でリセットするように変更済み．
+      // TODO 実装はしたが，テストはまだ．
+      final int startGroupID = config.getStartGroupID();
+      final AtomicInteger methodGroupID = new AtomicInteger(startGroupID);
+
       for (final Path groupDir : groupDirs) {
 
         // TODO 対象のメソッドグループ以外の処理をしないように変更．
@@ -98,10 +104,6 @@ public class TestExecutor extends TestRunner {
         if (groupID < lowerBound || upperBound < groupID) {
           continue;
         }
-
-        // TODO メソッドのグループIDは，シグネチャが同じグループ内でリセットするように変更済み．
-        // TODO 実装はしたが，テストはまだ．
-        final AtomicInteger methodGroupID = new AtomicInteger(1);
 
         final List<Path> targetDirs = Files.list(groupDir)
             .filter(Files::isDirectory)
@@ -232,7 +234,6 @@ public class TestExecutor extends TestRunner {
             .distinct()
             .filter(g -> JavaMethodDAO.SINGLETON.isDifferentSyntax(g))
             .collect(Collectors.toList());
-        // TODO メソッドのグループIDは，シグネチャが同じメソッドグループでリセットするように変更する
         groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, methodGroupID.getAndIncrement()));
       }
 
