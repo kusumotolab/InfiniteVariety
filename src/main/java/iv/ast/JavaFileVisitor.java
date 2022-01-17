@@ -14,6 +14,7 @@ import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.AssertStatement;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BreakStatement;
+import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ContinueStatement;
 import org.eclipse.jdt.core.dom.DoStatement;
@@ -30,6 +31,7 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
 import org.eclipse.jdt.core.dom.NullLiteral;
+import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedType;
@@ -38,6 +40,7 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.StringLiteral;
 import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.SynchronizedStatement;
 import org.eclipse.jdt.core.dom.ThrowStatement;
@@ -498,7 +501,9 @@ public class JavaFileVisitor extends ASTVisitor {
     final ASTNode grandParent = parent.getParent();
     if (parent instanceof Block && 1 == ((Block) parent).statements()
         .size() && MethodDeclaration.class == grandParent.getClass()
-        && (SimpleName.class == operand.getClass() || NullLiteral.class == operand.getClass())) {
+        && (SimpleName.class == operand.getClass() || NullLiteral.class == operand.getClass()
+        || CharacterLiteral.class == operand.getClass() || StringLiteral.class == operand.getClass()
+        || NumberLiteral.class == operand.getClass())) {
       isTarget = false;
       return false;
     }
