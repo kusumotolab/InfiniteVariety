@@ -64,7 +64,10 @@ public class JavaFileVisitor extends ASTVisitor {
   private final String path;
   private final List<JavaMethod> javaMethods;
   private final AtomicInteger methodCount;
-  private final Stack<List<SimpleName>> normalizationTargetNodesStack;
+  private final Stack<List<SimpleName>> variableNodesStack;
+  private final Stack<List<CharacterLiteral>> characterLiteralNodesStack;
+  private final Stack<List<NumberLiteral>> numberLiteralNodesStack;
+  private final Stack<List<StringLiteral>> stringLiteralNodesStack;
   private final Stack<List<Statement>> statementsStack;
   private final String[] javalangClasses = new String[] {
       "AbstractMethodError",//
@@ -291,7 +294,10 @@ public class JavaFileVisitor extends ASTVisitor {
     this.isTarget = true;
     this.javaMethods = new ArrayList<>();
     this.methodCount = new AtomicInteger(0);
-    this.normalizationTargetNodesStack = new Stack<>();
+    this.characterLiteralNodesStack = new Stack<>();
+    this.numberLiteralNodesStack = new Stack<>();
+    this.stringLiteralNodesStack = new Stack<>();
+    this.variableNodesStack = new Stack<>();
     this.statementsStack = new Stack<>();
   }
 
@@ -314,8 +320,11 @@ public class JavaFileVisitor extends ASTVisitor {
     // メソッド数をインクリメント
     methodCount.getAndIncrement();
 
-    // 正規化する変数名を表すノードを記録するための処理
-    normalizationTargetNodesStack.push(new ArrayList<SimpleName>());
+    // 正規化するノードを記録するための処理
+    characterLiteralNodesStack.push(new ArrayList<CharacterLiteral>());
+    numberLiteralNodesStack.push(new ArrayList<NumberLiteral>());
+    stringLiteralNodesStack.push(new ArrayList<StringLiteral>());
+    variableNodesStack.push(new ArrayList<SimpleName>());
 
     // 返値，引数，ボディのノードを取得
     final Optional<Type> returnTypeOptional = Optional.ofNullable(node.getReturnType2());
@@ -345,7 +354,10 @@ public class JavaFileVisitor extends ASTVisitor {
 
     // ボディが空なら条件を満たさない
     if (bodyOptional.isEmpty()) {
-      normalizationTargetNodesStack.pop();
+      characterLiteralNodesStack.pop();
+      numberLiteralNodesStack.pop();
+      stringLiteralNodesStack.pop();
+      variableNodesStack.pop();
       return false;
     }
     //ビジターを利用して，返値と引数が条件を満たすかチェック
@@ -353,7 +365,10 @@ public class JavaFileVisitor extends ASTVisitor {
     returnTypeOptional.ifPresent(r -> r.accept(this));
     parameters.forEach(p -> p.accept(this));
     if (!isTarget) {
-      normalizationTargetNodesStack.pop();
+      characterLiteralNodesStack.pop();
+      numberLiteralNodesStack.pop();
+      stringLiteralNodesStack.pop();
+      variableNodesStack.pop();
       return false;
     }
 
@@ -363,13 +378,23 @@ public class JavaFileVisitor extends ASTVisitor {
     bodyOptional.ifPresent(b -> b.accept(this));
     final List<Statement> statements = statementsStack.pop();
     if (!isTarget) {
-      normalizationTargetNodesStack.pop();
+      characterLiteralNodesStack.pop();
+      numberLiteralNodesStack.pop();
+      stringLiteralNodesStack.pop();
+      variableNodesStack.pop();
       return false;
     }
 
     // このメソッドの正規化文字列を取得
-    final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.pop();
-    normalizationTargetNodes.forEach(n -> n.setIdentifier("$variable"));
+    final List<CharacterLiteral> characterLiteralNodes = characterLiteralNodesStack.pop();
+    characterLiteralNodes.forEach(n -> n.setCharValue('$'));
+    ;
+    final List<NumberLiteral> numberLiteralNodes = numberLiteralNodesStack.pop();
+    numberLiteralNodes.forEach(n -> n.setToken("0"));
+    final List<StringLiteral> stringLiteralNodes = stringLiteralNodesStack.pop();
+    stringLiteralNodes.forEach(n -> n.setLiteralValue("$string"));
+    final List<SimpleName> variableNodes = variableNodesStack.pop();
+    variableNodes.forEach(n -> n.setIdentifier("$variable"));
     node.getName()
         .setIdentifier("$method");
     final String normalizedText = node.toString();
@@ -456,8 +481,35 @@ public class JavaFileVisitor extends ASTVisitor {
 
   @Override
   public boolean visit(final SimpleName node) {
-    if (!normalizationTargetNodesStack.isEmpty()) {
-      final List<SimpleName> normalizationTargetNodes = normalizationTargetNodesStack.peek();
+    if (!variableNodesStack.isEmpty()) {
+      final List<SimpleName> normalizationTargetNodes = variableNodesStack.peek();
+      normalizationTargetNodes.add(node);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean visit(final CharacterLiteral node) {
+    if (!characterLiteralNodesStack.isEmpty()) {
+      final List<CharacterLiteral> normalizationTargetNodes = characterLiteralNodesStack.peek();
+      normalizationTargetNodes.add(node);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean visit(final NumberLiteral node) {
+    if (!numberLiteralNodesStack.isEmpty()) {
+      final List<NumberLiteral> normalizationTargetNodes = numberLiteralNodesStack.peek();
+      normalizationTargetNodes.add(node);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean visit(final StringLiteral node) {
+    if (!stringLiteralNodesStack.isEmpty()) {
+      final List<StringLiteral> normalizationTargetNodes = stringLiteralNodesStack.peek();
       normalizationTargetNodes.add(node);
     }
     return false;
