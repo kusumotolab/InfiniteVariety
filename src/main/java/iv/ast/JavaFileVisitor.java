@@ -29,6 +29,7 @@ import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NameQualifiedType;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
+import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.ParameterizedType;
 import org.eclipse.jdt.core.dom.PrimitiveType;
 import org.eclipse.jdt.core.dom.QualifiedType;
@@ -295,7 +296,7 @@ public class JavaFileVisitor extends ASTVisitor {
     return Collections.unmodifiableList(javaMethods);
   }
 
-  public int getAllMethodCount(){
+  public int getAllMethodCount() {
     return methodCount.get();
   }
 
@@ -492,12 +493,12 @@ public class JavaFileVisitor extends ASTVisitor {
 
     // 以下の条件を全て満たす場合は対象外
     // return文が一つだけのメソッド
-    // return文のオペランドが変数単体
+    // return文のオペランドが変数単体，もしくはreturn文のオペランドがnull
     final ASTNode parent = node.getParent();
     final ASTNode grandParent = parent.getParent();
     if (parent instanceof Block && 1 == ((Block) parent).statements()
         .size() && MethodDeclaration.class == grandParent.getClass()
-        && SimpleName.class == operand.getClass()) {
+        && (SimpleName.class == operand.getClass() || NullLiteral.class == operand.getClass())) {
       isTarget = false;
       return false;
     }
@@ -634,6 +635,15 @@ public class JavaFileVisitor extends ASTVisitor {
     if (!statementsStack.isEmpty()) {
       statementsStack.peek()
           .add(node);
+    }
+
+    // メソッドの中に単一のThrow文のみがある場合は対象外．
+    final ASTNode parent = node.getParent();
+    final ASTNode grandParent = parent.getParent();
+    if (parent instanceof Block && 1 == ((Block) parent).statements()
+        .size() && MethodDeclaration.class == grandParent.getClass()) {
+      isTarget = false;
+      return false;
     }
 
     return super.visit(node);
