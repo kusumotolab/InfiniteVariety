@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -83,10 +84,12 @@ public class Classifier {
       }
 
       // 指定されたシグネチャを持つメソッドの数が2つ未満の場合は何もしない
-      final List<JavaMethod> methods = JavaMethodDAO.SINGLETON.getMethods(signature);
-      if (methods.stream()
+      final List<JavaMethod> methods = JavaMethodDAO.SINGLETON.getMethods(signature)
+          .stream()
           .filter(m -> 1 < m.size)
-          .count() < 2) {
+          .collect(
+              Collectors.toList());
+      if (methods.size() < 2) {
         continue;
       }
 
