@@ -652,18 +652,6 @@ public class JavaFileVisitor extends ASTVisitor {
     return super.visit(node);
   }
 
-
-  @Override
-  public void endVisit(final ReturnStatement node) {
-
-    if (!statementsStack.isEmpty()) {
-      statementsStack.peek()
-          .add(node);
-    }
-
-    super.endVisit(node);
-  }
-
   @Override
   public boolean visit(final SwitchStatement node) {
 
