@@ -15,6 +15,7 @@ public class JavaFileVisitorTest {
   private static final String methodCode_CheckingTypeParameterHandling = //
       "public class Class1 {" + //
           "  public List<String> method1(Set<Integer> parameter1) {" + //
+          "    System.out.println(\"hoge\");" + //
           "    return null;" + //
           "  }" + //
           "}";//
