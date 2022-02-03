@@ -332,11 +332,11 @@ public class JavaFileVisitor extends ASTVisitor {
     final List<SingleVariableDeclaration> parameters = (List<SingleVariableDeclaration>) node.parameters();
     final Optional<Block> bodyOptional = Optional.ofNullable(node.getBody());
 
-    // アノテーションを削除
+    // 仮引数のアノテーションを削除
     node.modifiers()
         .removeIf(m -> m instanceof MarkerAnnotation || m instanceof NormalAnnotation);
 
-    // 修飾子を削除
+    // 仮引数の修飾子を削除
     node.modifiers()
         .removeIf(m -> m instanceof Modifier);
     parameters.stream()
