@@ -15,6 +15,7 @@ import org.eclipse.jdt.core.dom.AssertStatement;
 import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.CharacterLiteral;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ContinueStatement;
 import org.eclipse.jdt.core.dom.DoStatement;
@@ -747,5 +748,14 @@ public class JavaFileVisitor extends ASTVisitor {
     }
 
     return super.visit(node);
+  }
+
+  @Override
+  public void endVisit(final ClassInstanceCreation node) {
+    // もし型引数があるなら，それを取り除く
+    final Type type = node.getType();
+    if(type.isParameterizedType()){
+      ((ParameterizedType)type).typeArguments().clear();
+    }
   }
 }

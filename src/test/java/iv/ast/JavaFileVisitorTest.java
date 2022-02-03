@@ -48,6 +48,18 @@ public class JavaFileVisitorTest {
           " }" + //
           "}";
 
+  private static final String methodCode_CheckingHashCalculation3 = //
+      "public class Class1 {" + //
+          "  public List<String> method1(String a) {" + //
+          "    List<String> list = new ArrayList<>();" + //
+          "    return list;" + //
+          "  }" + //
+          "  private List<String> method2(String b) {" + //
+          "    List<String> list = new ArrayList<String>();" + //
+          "    return list;" + //
+          " }" + //
+          "}";
+
   @Test
   public void test_checkingTypeParameterHandling() {
     final IVConfig config = Mockito.mock(IVConfig.class);
@@ -88,6 +100,22 @@ public class JavaFileVisitorTest {
     final JavaMethodExtractor extractor = new JavaMethodExtractor(config, null, commit);
     final List<JavaMethod> methods = extractor.getJavaMethods("",
         methodCode_CheckingHashCalculation2);
+    assertThat(methods).hasSize(2);
+
+    final JavaMethod method1 = methods.get(0);
+    final JavaMethod method2 = methods.get(1);
+    assertThat(method1.getMD5()).isEqualTo(method2.getMD5());
+  }
+
+  @Test
+  public void test_checkingHashCalculation3() {
+    final IVConfig config = Mockito.mock(IVConfig.class);
+    when(config.getJavaVersion()).thenReturn(JavaVersion.V1_16);
+    final RevCommit commit = Mockito.mock(RevCommit.class);
+    when(commit.getName()).thenReturn("commit1");
+    final JavaMethodExtractor extractor = new JavaMethodExtractor(config, null, commit);
+    final List<JavaMethod> methods = extractor.getJavaMethods("",
+        methodCode_CheckingHashCalculation3);
     assertThat(methods).hasSize(2);
 
     final JavaMethod method1 = methods.get(0);
