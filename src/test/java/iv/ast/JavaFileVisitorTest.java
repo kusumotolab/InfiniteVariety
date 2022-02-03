@@ -39,12 +39,12 @@ public class JavaFileVisitorTest {
   private static final String methodCode_CheckingHashCalculation2 = //
       "public class Class1 {" + //
           "  public int method1(final int a) {" + //
-          "    System.out.println(a);" + //
-          "    return a;" + //
+          "    final int aa = a + 1;" + //
+          "    return aa;" + //
           "  }" + //
           "  private int method2(int b) {" + //
-          "    System.out.println(b);" + //
-          "    return b;" + //
+          "    int bb = b + 1;" + //
+          "    return bb;" + //
           " }" + //
           "}";
 

@@ -725,6 +725,10 @@ public class JavaFileVisitor extends ASTVisitor {
           .add(node);
     }
 
+    // 修飾子を削除
+    node.modifiers()
+        .removeIf(m -> m instanceof Modifier);
+
     return super.visit(node);
   }
 
