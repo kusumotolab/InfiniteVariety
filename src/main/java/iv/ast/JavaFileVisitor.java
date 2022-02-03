@@ -73,7 +73,7 @@ public class JavaFileVisitor extends ASTVisitor {
   private final String[] javalangClasses = new String[] {
       "AbstractMethodError",//
       "Appendable",//
-      " ArithmeticException",//
+      "ArithmeticException",//
       "ArrayIndexOutOfBoundsException",//
       "ArrayStoreException",//
       "AssertionError",//
@@ -315,6 +315,11 @@ public class JavaFileVisitor extends ASTVisitor {
 
     // コンストラクタは対象外
     if (node.isConstructor()) {
+      return false;
+    }
+
+    final List<?> thrownExceptionTypes = node.thrownExceptionTypes();
+    if(null != thrownExceptionTypes && !thrownExceptionTypes.isEmpty()){
       return false;
     }
 
@@ -691,6 +696,9 @@ public class JavaFileVisitor extends ASTVisitor {
       isTarget = false;
       return false;
     }
+
+    // 一時的にthrow文がある場合は対象外とする
+    isTarget = false;
 
     return super.visit(node);
   }
