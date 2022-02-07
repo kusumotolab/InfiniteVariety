@@ -177,6 +177,22 @@ public class TestGenerator extends TestRunner {
                 }
               }
 
+              // 生成したテストの数をチェック．1つだけならテスト生成失敗と見なす
+              {
+                final Path target_ESTest = testDir.resolve("Target_ESTest.java");
+                try {
+                  final List<String> lines = Files.readAllLines(target_ESTest);
+                  if (lines.stream()
+                      .filter(l -> l.contains("@Test"))
+                      .count() < 2) {
+                    return;
+                  }
+                } catch (final IOException e) {
+                  System.err.println("cannot read a file: " + target_ESTest.toString());
+                  return;
+                }
+              }
+
               {// 生成したテストをコンパイル
                 final Path target_ESTest = testDir.resolve("Target_ESTest.java");
                 final Path target_ESTest_scaffolding = testDir.resolve(
