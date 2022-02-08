@@ -34,6 +34,7 @@ public class JavaMethodDAO {
       "repo string, " + //
       "revision string, " + //
       "compilable int, " + //
+      "tests int, " + //
       "Target_ESTest blob, " + //
       "Target_ESTest_scaffolding blob, " + //
       "groupID int, " + //
@@ -76,7 +77,7 @@ public class JavaMethodDAO {
 
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods(signature, name, rtext, ntext, size, hash, path, start, end, repo, revision, compilable, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, rtext, ntext, size, hash, path, start, end, repo, revision, compilable, tests, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
@@ -91,6 +92,7 @@ public class JavaMethodDAO {
         statement.setString(11, method.commit);
         statement.setInt(12, -1);
         statement.setInt(13, -1);
+        statement.setInt(14, -1);
 
         try {
           statement.execute();
@@ -160,6 +162,38 @@ public class JavaMethodDAO {
     return false;
   }
 
+  public int getNumberOfTests(final String id) {
+
+    try {
+      return getNumberOfTests(Integer.parseInt(id));
+    } catch (final NumberFormatException e) {
+      return 0;
+    }
+  }
+
+  synchronized public int getNumberOfTests(final int id) {
+    try {
+      final PreparedStatement statement = connector.prepareStatement(
+          "select tests from methods where id = ?");
+      statement.setInt(1, id);
+      final ResultSet results = statement.executeQuery();
+
+      // 該当するIDのメソッドがない場合には0を返す
+      if (!results.next()) {
+        return 0;
+      }
+
+      // 該当するIDのメソッドがある場合にはそのtestsカラムの値を返す
+      final int tests = results.getInt(1);
+      return tests;
+
+    } catch (final SQLException e) {
+      e.printStackTrace();
+    }
+
+    return 0;
+  }
+
   public boolean exists(final String id) {
 
     try {
@@ -184,15 +218,16 @@ public class JavaMethodDAO {
     return false;
   }
 
-  synchronized public void setTests(final int id, final String target_ESTest,
+  synchronized public void setTests(final int id, final int tests, final String target_ESTest,
       final String target_ESTest_scaffolding) {
 
     try {
       final PreparedStatement statement = connector.prepareStatement(
-          "update methods set Target_ESTest = ?, Target_ESTest_scaffolding = ? where id = ?");
-      statement.setBytes(1, target_ESTest.getBytes());
-      statement.setBytes(2, target_ESTest_scaffolding.getBytes());
-      statement.setInt(3, id);
+          "update methods set tests = ?, Target_ESTest = ?, Target_ESTest_scaffolding = ? where id = ?");
+      statement.setInt(1, tests);
+      statement.setBytes(2, target_ESTest.getBytes());
+      statement.setBytes(3, target_ESTest_scaffolding.getBytes());
+      statement.setInt(4, id);
       statement.executeUpdate();
       connector.commit();
     } catch (final SQLException e) {

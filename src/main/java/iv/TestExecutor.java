@@ -112,7 +112,9 @@ public class TestExecutor extends TestRunner {
         // テストが生成されているディレクトリ（メソッド）のみを取得
         final List<Path> compilableMethodDirs = targetDirs.stream()
             .filter(t -> JavaMethodDAO.SINGLETON.isCompilable(t.getFileName()
-                .toString()))
+                .toString())) // コンパイルできたメソッドのみを取得
+            .filter(t -> 1 < JavaMethodDAO.SINGLETON.getNumberOfTests(t.getFileName()
+                .toString())) // 2つ以上のテストケースを生成できたメソッドのみを取得
             .collect(
                 Collectors.toList());
 

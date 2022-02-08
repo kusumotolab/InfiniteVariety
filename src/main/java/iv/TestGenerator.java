@@ -177,22 +177,6 @@ public class TestGenerator extends TestRunner {
                 }
               }
 
-              // 生成したテストの数をチェック．1つだけならテスト生成失敗と見なす
-              {
-                final Path target_ESTest = testDir.resolve("Target_ESTest.java");
-                try {
-                  final List<String> lines = Files.readAllLines(target_ESTest);
-                  if (lines.stream()
-                      .filter(l -> l.contains("@Test"))
-                      .count() < 2) {
-                    return;
-                  }
-                } catch (final IOException e) {
-                  System.err.println("cannot read a file: " + target_ESTest.toString());
-                  return;
-                }
-              }
-
               {// 生成したテストをコンパイル
                 final Path target_ESTest = testDir.resolve("Target_ESTest.java");
                 final Path target_ESTest_scaffolding = testDir.resolve(
@@ -215,7 +199,11 @@ public class TestGenerator extends TestRunner {
                   final String text1 = Files.readString(target_ESTest, StandardCharsets.UTF_8);
                   final String text2 = Files.readString(target_ESTest_scaffolding,
                       StandardCharsets.UTF_8);
-                  JavaMethodDAO.SINGLETON.setTests(methodID, text1, text2);
+                  final int tests = (int) Arrays.asList(text1.split("\r\n|\r|\n"))
+                      .stream()
+                      .filter(l -> l.contains("@test"))
+                      .count();
+                  JavaMethodDAO.SINGLETON.setTests(methodID, tests, text1, text2);
                 } catch (final IOException e) {
                   e.printStackTrace();
                   System.exit(0);
