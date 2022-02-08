@@ -98,11 +98,17 @@ public class Registerer {
 
     // dirがディレクトリのとき
     else if (Files.isDirectory(dir)) {
-      try {
-        Files.list(dir)
-            .forEach(c -> javaMethods.addAll(getJavaMethods(c)));
-      }catch(final IOException e){
-        System.err.println(e.getMessage());
+
+      // ディレクトリ名がtestなら無視する
+      if (!dir.getFileName()
+          .toString()
+          .equalsIgnoreCase("test")) {
+        try {
+          Files.list(dir)
+              .forEach(c -> javaMethods.addAll(getJavaMethods(c)));
+        } catch (final IOException e) {
+          System.err.println(e.getMessage());
+        }
       }
     }
 
