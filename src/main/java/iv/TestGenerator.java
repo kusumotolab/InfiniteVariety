@@ -127,9 +127,8 @@ public class TestGenerator extends TestRunner {
             @Override
             public void run() {
               {// 対象のメソッドをコンパイル
-                final List<String> command = Arrays.asList("javac",
-                    targetDir.resolve("Target.java")
-                        .toString());
+                final List<String> command = Arrays.asList("javac", targetDir.resolve("Target.java")
+                    .toString());
                 final int exitValue = executeProcess(command);
 
                 // コンパイルの可否をデータベースに保存
@@ -164,6 +163,12 @@ public class TestGenerator extends TestRunner {
 
               {
                 if (Files.notExists(testDir)) { // テストディレクトリが既に存在する場合は処理をスキップ
+                  try {
+                    Files.createDirectory(testDir);
+                  } catch (final IOException e) {
+                    System.err.println("failed to create directory: " + testDir.toString());
+                    return;
+                  }
                   final List<String> command = Arrays.asList("java", "-jar",
                       "lib/evosuite-1.2.0.jar", "-class", "Target", "-projectCP",
                       targetDir.toString(),
@@ -181,6 +186,10 @@ public class TestGenerator extends TestRunner {
                 final Path target_ESTest = testDir.resolve("Target_ESTest.java");
                 final Path target_ESTest_scaffolding = testDir.resolve(
                     "Target_ESTest_scaffolding.java");
+                if (Files.notExists(target_ESTest) || Files.notExists(target_ESTest_scaffolding)) {
+                  System.err.println("test cases are not generated for " + targetDir.toString());
+                  return;
+                }
                 final List<String> command = Arrays.asList("javac",
                     target_ESTest.toString(), target_ESTest_scaffolding.toString());
                 final String classpath = getClassPath(targetDir, testDir);
@@ -201,8 +210,9 @@ public class TestGenerator extends TestRunner {
                       StandardCharsets.UTF_8);
                   final int tests = (int) Arrays.asList(text1.split("\r\n|\r|\n"))
                       .stream()
-                      .filter(l -> l.contains("@test"))
+                      .filter(l -> l.contains("@Test"))
                       .count();
+                  System.out.println("the number of generated tests:" + tests);
                   JavaMethodDAO.SINGLETON.setTests(methodID, tests, text1, text2);
                 } catch (final IOException e) {
                   e.printStackTrace();

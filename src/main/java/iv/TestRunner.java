@@ -21,7 +21,7 @@ public abstract class TestRunner {
       processBuilder.redirectErrorStream(true);
       final Map<String, String> environment = processBuilder.environment();
       environment.put("JAVA_HOME",
-          "/Library/Java/JavaVirtualMachines/jdk-15.0.2.jdk/Contents/Home");
+          "/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home");
       environment.putAll(environmentVariables);
       final Process javacProcess = processBuilder.start();
       final StreamThread outThread = new StreamThread(javacProcess.getInputStream(), System.out);
