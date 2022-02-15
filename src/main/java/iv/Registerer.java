@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -74,7 +74,13 @@ public class Registerer {
     }
 
     JavaMethodDAO.SINGLETON.initialize(config);
-    JavaMethodDAO.SINGLETON.addMethods(javaMethods);
+    JavaMethodDAO.SINGLETON.addMethods(javaMethods.stream()
+        .filter(m -> !m.isTest())
+        .collect(
+            Collectors.toList()));
+    final long tests = javaMethods.stream()
+        .filter(m -> m.isTest()).count();
+    System.out.println("tests: " + tests);
     JavaMethodDAO.SINGLETON.close();
   }
 
@@ -99,16 +105,11 @@ public class Registerer {
     // dirがディレクトリのとき
     else if (Files.isDirectory(dir)) {
 
-      // ディレクトリ名がtestなら無視する
-      if (!dir.getFileName()
-          .toString()
-          .equalsIgnoreCase("test")) {
-        try {
-          Files.list(dir)
-              .forEach(c -> javaMethods.addAll(getJavaMethods(c)));
-        } catch (final IOException e) {
-          System.err.println(e.getMessage());
-        }
+      try {
+        Files.list(dir)
+            .forEach(c -> javaMethods.addAll(getJavaMethods(c)));
+      } catch (final IOException e) {
+        System.err.println(e.getMessage());
       }
     }
 
