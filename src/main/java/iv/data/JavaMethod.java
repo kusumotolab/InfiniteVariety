@@ -1,5 +1,6 @@
 package iv.data;
 
+import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -133,7 +134,7 @@ public class JavaMethod {
   }
 
   public boolean isTest() {
-    return Stream.of(path.split(System.lineSeparator()))
+    return Stream.of(path.split(File.separator))
         .anyMatch(l -> l.equalsIgnoreCase("test") || l.equalsIgnoreCase("testdata"));
   }
 }
