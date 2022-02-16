@@ -4,6 +4,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 import org.eclipse.jgit.revwalk.RevCommit;
 
@@ -133,7 +134,12 @@ public class JavaMethod {
   }
 
   public boolean isTest() {
-    return Stream.of(path.split(System.lineSeparator()))
-        .anyMatch(l -> l.equalsIgnoreCase("test") || l.equalsIgnoreCase("testdata"));
+    return path.toLowerCase()
+        .endsWith("test.java") || Stream.of(
+            path.split(System.lineSeparator()))
+        .anyMatch(l -> l.toLowerCase()
+            .endsWith("test") || l.toLowerCase()
+            .endsWith("tests") || l.equalsIgnoreCase(
+            "tsz") || l.equalsIgnoreCase("testdata"));
   }
 }
