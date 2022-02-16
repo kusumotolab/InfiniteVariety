@@ -137,7 +137,7 @@ public class JavaMethod {
   public boolean isTest() {
     return path.toLowerCase()
         .endsWith("test.java") || Stream.of(
-            path.split(System.lineSeparator()))
+            path.split(File.separator))
         .anyMatch(l -> l.toLowerCase()
             .endsWith("test") || l.toLowerCase()
             .endsWith("tests") || l.equalsIgnoreCase(
