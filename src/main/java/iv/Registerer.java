@@ -76,11 +76,17 @@ public class Registerer {
     JavaMethodDAO.SINGLETON.initialize(config);
     JavaMethodDAO.SINGLETON.addMethods(javaMethods.stream()
         .filter(m -> !m.isTest())
+        .filter(m -> !m.isToy())
         .collect(
             Collectors.toList()));
     final long tests = javaMethods.stream()
-        .filter(m -> m.isTest()).count();
+        .filter(m -> m.isTest())
+        .count();
+    final long toys = javaMethods.stream()
+        .filter(m -> m.isToy())
+        .count();
     System.out.println("tests: " + tests);
+    System.out.println("toys: " + toys);
     JavaMethodDAO.SINGLETON.close();
   }
 

@@ -141,6 +141,13 @@ public class JavaMethod {
         .anyMatch(l -> l.toLowerCase()
             .endsWith("test") || l.toLowerCase()
             .endsWith("tests") || l.equalsIgnoreCase(
-            "tsz") || l.equalsIgnoreCase("testdata"));
+            "tsz") || l.equalsIgnoreCase("testing") || l.equalsIgnoreCase("testsrc")
+            || l.equalsIgnoreCase("testdata"));
+  }
+
+  public boolean isToy() {
+    return Stream.of(path.split(File.separator))
+        .anyMatch(l -> l.equalsIgnoreCase("sample") || l.equalsIgnoreCase("samples")
+            || l.equalsIgnoreCase("example") || l.equalsIgnoreCase("examples"));
   }
 }
