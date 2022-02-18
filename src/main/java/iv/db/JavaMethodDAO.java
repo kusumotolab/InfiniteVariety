@@ -40,6 +40,10 @@ public class JavaMethodDAO {
       "groupID int, " + //
       "id integer primary key autoincrement";
 
+  static public final String PAIRS_SCHEMA = "leftMethodID int, " + //
+      "rightMethodID int, " + //
+      "id integer primary key autoincrement";
+
   static public JavaMethodDAO SINGLETON = new JavaMethodDAO();
   private Connection connector;
   private IVConfig config;
@@ -58,9 +62,17 @@ public class JavaMethodDAO {
       connector.setAutoCommit(false);
 
       final Statement statement = connector.createStatement();
+
+      // methods テーブルの初期化
       statement.executeUpdate("create table if not exists methods (" + METHODS_SCHEMA + ")");
       statement.executeUpdate(
           "create unique index if not exists sameness on methods (path, start, end, repo, revision)");
+
+      // pairs テーブルの初期化
+      statement.executeUpdate("create table if not exists pairs (" + PAIRS_SCHEMA + ")");
+      statement.executeUpdate(
+          "create unique index if not exists sameness on methods (leftMethodID, rightMethodID)");
+
       connector.commit();
       statement.close();
     } catch (final ClassNotFoundException | SQLException e) {
@@ -336,6 +348,39 @@ public class JavaMethodDAO {
     } catch (final SQLException e) {
       e.printStackTrace();
       System.exit(0);
+    }
+  }
+
+  synchronized public void addPair(final int leftMethodID, final int rightMethodID) {
+
+    if (leftMethodID <= 0 || rightMethodID <= 0) {
+      return;
+    }
+
+    try {
+      final PreparedStatement statement = this.connector.prepareStatement(
+          "insert into pairs(leftMethodID, rightMethodID) values (?, ?)");
+      statement.setInt(1, leftMethodID);
+      statement.setInt(2, rightMethodID);
+
+      try {
+        statement.execute();
+      } catch (final SQLiteException e) {
+        final SQLiteErrorCode code = e.getResultCode();
+        if (code.name()
+            .equals("SQLITE_CONSTRAINT_UNIQUE")) {
+          System.err.println(
+              "already registered: method pair of " + leftMethodID + " and " + rightMethodID);
+        } else {
+          e.printStackTrace();
+        }
+      }
+
+      connector.commit();
+      statement.close();
+
+    } catch (final SQLException e) {
+      e.printStackTrace();
     }
   }
 }

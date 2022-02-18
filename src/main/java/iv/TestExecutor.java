@@ -118,9 +118,6 @@ public class TestExecutor extends TestRunner {
             .collect(
                 Collectors.toList());
 
-        // 振る舞いが同じテスト群を格納するための入れ物を準備
-        final Map<Integer, Set<Integer>> methodGroups = new HashMap<>();
-
         // マルチスレッド管理
         final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime()
             .availableProcessors());
@@ -159,23 +156,17 @@ public class TestExecutor extends TestRunner {
               @Override
               public void run() {
 
-                final LocalDateTime localDate = LocalDateTime.now();
-                final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
-                    "yyyy/MM/dd HH:mm:ss");
-                final String formattedTime = localDate.format(formatter);
-                final StringBuilder text = new StringBuilder();
-                text.append(formattedTime);
-                text.append(" [group ");
-                text.append(groupID);
-                text.append("][");
-                text.append(processingIndex);
-                text.append("/");
-                text.append(numberOfProcessing);
-                text.append("] checking compatibility between ");
-                text.append(leftSourceDirName);
-                text.append(" and ");
-                text.append(rightSourceDirName);
-                System.out.println(text.toString());
+                {
+                  final StringBuilder text = new StringBuilder();
+                  final String label = generateLabel(groupID, processingIndex, numberOfProcessing);
+                  text.append(label);
+                  text.append(" checking compatibility between ");
+                  text.append(leftSourceDirName);
+                  text.append(" and ");
+                  text.append(rightSourceDirName);
+                  text.append(".");
+                  System.out.println(text.toString());
+                }
 
                 final List<String> command = Arrays.asList("java",
                     "org.junit.runner.JUnitCore",
@@ -201,27 +192,18 @@ public class TestExecutor extends TestRunner {
 
                 final int leftMethodID = Integer.valueOf(leftSourceDirName);
                 final int rightMethodID = Integer.valueOf(rightSourceDirName);
-                final Set<Integer> leftMethodGroup = methodGroups.get(leftMethodID);
-                final Set<Integer> rightMethodGroup = methodGroups.get(rightMethodID);
-                if (null == leftMethodGroup && null == rightMethodGroup) {
-                  final Set<Integer> newGroup = new HashSet<>();
-                  newGroup.add(leftMethodID);
-                  newGroup.add(rightMethodID);
-                  methodGroups.put(leftMethodID, newGroup);
-                  methodGroups.put(rightMethodID, newGroup);
-                } else if (null != leftMethodGroup && null == rightMethodGroup) {
-                  leftMethodGroup.add(rightMethodID);
-                  methodGroups.put(rightMethodID, leftMethodGroup);
-                } else if (null == leftMethodGroup && null != rightMethodGroup) {
-                  rightMethodGroup.add(leftMethodID);
-                  methodGroups.put(leftMethodID, rightMethodGroup);
-                } else if (null != leftMethodGroup && null != rightMethodGroup
-                    && leftMethodGroup != rightMethodGroup) {
-                  rightMethodGroup.forEach(rMethodID -> {
-                    leftMethodGroup.add(rMethodID);
-                    methodGroups.remove(rMethodID);
-                    methodGroups.put(rMethodID, leftMethodGroup);
-                  });
+                JavaMethodDAO.SINGLETON.addPair(leftMethodID, rightMethodID);
+
+                {
+                  final StringBuilder text = new StringBuilder();
+                  final String label = generateLabel(groupID, processingIndex, numberOfProcessing);
+                  text.append(label);
+                  text.append(" method pair of ");
+                  text.append(leftSourceDirName);
+                  text.append(" and ");
+                  text.append(rightSourceDirName);
+                  text.append(" has been regarded as functionally equivalent.");
+                  System.out.println(text.toString());
                 }
               }
             });
@@ -230,18 +212,31 @@ public class TestExecutor extends TestRunner {
 
         executorService.shutdown();
         executorService.awaitTermination(10, TimeUnit.MINUTES);
-
-        final List<Set<Integer>> groups = methodGroups.values()
-            .stream()
-            .distinct()
-            .filter(g -> JavaMethodDAO.SINGLETON.isDifferentSyntax(g))
-            .collect(Collectors.toList());
-        groups.forEach(g -> JavaMethodDAO.SINGLETON.setGroup(g, methodGroupID.getAndIncrement()));
       }
+
+      JavaMethodDAO.SINGLETON.close();
 
     } catch (final IOException | InterruptedException e) {
       e.printStackTrace();
       System.exit(0);
     }
+  }
+
+  private String generateLabel(final int groupID, final int processingIndex,
+      final int numberOfProcessing) {
+    final LocalDateTime localDate = LocalDateTime.now();
+    final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
+        "yyyy/MM/dd HH:mm:ss");
+    final String formattedTime = localDate.format(formatter);
+    final StringBuilder text = new StringBuilder();
+    text.append(formattedTime);
+    text.append(" [group ");
+    text.append(groupID);
+    text.append("][");
+    text.append(processingIndex);
+    text.append("/");
+    text.append(numberOfProcessing);
+    text.append("]");
+    return text.toString();
   }
 }
