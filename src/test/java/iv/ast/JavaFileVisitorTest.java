@@ -20,6 +20,15 @@ public class JavaFileVisitorTest {
           "  }" + //
           "}";//
 
+  private static final String methodCode_CheckingThrowStatement = //
+      "public class Class1 {" + //
+          "  public int method1(int a) {" + //
+          "    throw new NullPointerException();" + //
+          "    return 1;" + //
+          "  }" + //
+          "}";//
+
+  // checking variable normalization
   private static final String methodCode_CheckingHashCalculation1 = //
       "public class Class1 {" + //
           "  public int method1(final Set<String> set1) {" + //
@@ -36,6 +45,7 @@ public class JavaFileVisitorTest {
           "  }" +//
           "}";
 
+  // checking final removal
   private static final String methodCode_CheckingHashCalculation2 = //
       "public class Class1 {" + //
           "  public int method1(final int a) {" + //
@@ -48,6 +58,7 @@ public class JavaFileVisitorTest {
           " }" + //
           "}";
 
+  // checking type argument removal
   private static final String methodCode_CheckingHashCalculation3 = //
       "public class Class1 {" + //
           "  public List<String> method1(String a) {" + //
@@ -60,6 +71,7 @@ public class JavaFileVisitorTest {
           " }" + //
           "}";
 
+  // checking annotation removal
   private static final String methodCode_CheckingHashCalculation4 = //
       "public class Class1 {" + //
           "  static public String method1(@NotNull String a) {" + //
@@ -99,6 +111,18 @@ public class JavaFileVisitorTest {
     final List<JavaMethod> methods = extractor.getJavaMethods("",
         methodCode_CheckingTypeParameterHandling);
     assertThat(methods).hasSize(1);
+  }
+
+  @Test
+  public void test_checkingThrowStatement() {
+    final IVConfig config = Mockito.mock(IVConfig.class);
+    when(config.getJavaVersion()).thenReturn(JavaVersion.V1_16);
+    final RevCommit commit = Mockito.mock(RevCommit.class);
+    when(commit.getName()).thenReturn("commit1");
+    final JavaMethodExtractor extractor = new JavaMethodExtractor(config, null, commit);
+    final List<JavaMethod> methods = extractor.getJavaMethods("",
+        methodCode_CheckingThrowStatement);
+    assertThat(methods).hasSize(0);
   }
 
   @Test
