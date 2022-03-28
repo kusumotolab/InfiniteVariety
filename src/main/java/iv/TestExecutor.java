@@ -110,11 +110,12 @@ public class TestExecutor extends TestRunner {
             .collect(Collectors.toList());
 
         // テストが生成されているディレクトリ（メソッド）のみを取得
+        final int lowerTests = config.getLowerTests();
         final List<Path> compilableMethodDirs = targetDirs.stream()
             .filter(t -> JavaMethodDAO.SINGLETON.isCompilable(t.getFileName()
                 .toString())) // コンパイルできたメソッドのみを取得
-            .filter(t -> 3 <= JavaMethodDAO.SINGLETON.getNumberOfTests(t.getFileName()
-                .toString())) // 3つ以上のテストケースを生成できたメソッドのみを取得
+            .filter(t -> lowerTests <= JavaMethodDAO.SINGLETON.getNumberOfTests(t.getFileName()
+                .toString())) // 閾値以上のテストケースを生成できたメソッドのみを取得
             .collect(
                 Collectors.toList());
 

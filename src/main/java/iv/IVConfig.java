@@ -14,6 +14,7 @@ public class IVConfig {
   private int lowerBound = 0;
   private int upperBound = Integer.MAX_VALUE;
   private int startGroupID = 0;
+  private int lowerTests = 5;
 
   public Path getDatabase() {
     return this.dbPath;
@@ -116,5 +117,19 @@ public class IVConfig {
       System.exit(0);
     }
     this.startGroupID = startGroupID;
+  }
+
+  public int getLowerTests() {
+    return this.lowerTests;
+  }
+
+  @Option(name = "-t", required = false, aliases = "--lower-tests", metaVar = "<tests>",
+      usage = "lower number of tests to be used")
+  public void setLowerTests(final int lowerTests) {
+    if (lowerTests < 0) {
+      System.err.println("an positive integer must be specified for lower tests.");
+      System.exit(0);
+    }
+    this.lowerTests = lowerTests;
   }
 }
