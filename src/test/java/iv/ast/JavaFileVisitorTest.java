@@ -94,11 +94,6 @@ public class JavaFileVisitorTest {
           "    System.out.println(b);" + //
           "    return b;" + //
           "  }" + //
-          "  public String method3(String c) {" + //
-          "    System.out.println(b);" + //
-          "    throw new Exception();" + //
-          "    return b;" + //
-          " }" + //
           "}";
 
   @Test
