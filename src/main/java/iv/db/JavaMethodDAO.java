@@ -27,6 +27,7 @@ public class JavaMethodDAO {
       "rtext blob, " + //
       "ntext blob, " + //
       "size int, " + //
+      "branches int, " + //
       "hash blob," + //
       "path string, " + //
       "start int, " + //
@@ -89,22 +90,23 @@ public class JavaMethodDAO {
 
     try {
       final PreparedStatement statement = this.connector.prepareStatement(
-          "insert into methods(signature, name, rtext, ntext, size, hash, path, start, end, repo, revision, compilable, tests, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+          "insert into methods(signature, name, rtext, ntext, size, branches, hash, path, start, end, repo, revision, compilable, tests, groupID) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
       for (final JavaMethod method : methods) {
         statement.setString(1, method.getSignatureText());
         statement.setString(2, method.name);
         statement.setBytes(3, method.rawText.getBytes());
         statement.setBytes(4, method.normalizedText.getBytes());
         statement.setInt(5, method.size);
-        statement.setBytes(6, method.getMD5());
-        statement.setString(7, method.path);
-        statement.setInt(8, method.startLine);
-        statement.setInt(9, method.endLine);
-        statement.setString(10, method.repository);
-        statement.setString(11, method.commit);
-        statement.setInt(12, -1);
+        statement.setInt(6, method.branches);
+        statement.setBytes(7, method.getMD5());
+        statement.setString(8, method.path);
+        statement.setInt(9, method.startLine);
+        statement.setInt(10, method.endLine);
+        statement.setString(11, method.repository);
+        statement.setString(12, method.commit);
         statement.setInt(13, -1);
         statement.setInt(14, -1);
+        statement.setInt(15, -1);
 
         try {
           statement.execute();
@@ -294,21 +296,22 @@ public class JavaMethodDAO {
     try {
       final Statement statement = connector.createStatement();
       final ResultSet results = statement.executeQuery(
-          "select name, rtext, ntext, size, path, start, end, repo, revision, id from methods where signature = \""
+          "select name, rtext, ntext, size, branches, path, start, end, repo, revision, id from methods where signature = \""
               + signature + "\"");
       while (results.next()) {
         final String name = results.getString(1);
         final String rtext = new String(results.getBytes(2), StandardCharsets.UTF_8);
         final String ntext = new String(results.getBytes(3), StandardCharsets.UTF_8);
         final int size = results.getInt(4);
-        final String path = results.getString(5);
-        final int start = results.getInt(6);
-        final int end = results.getInt(7);
-        final String repo = results.getString(8);
-        final String commit = results.getString(9);
-        final int id = results.getInt(10);
-        final JavaMethod method = new JavaMethod(signature, name, rtext, ntext, size, path, start,
-            end, repo, commit, id);
+        final int branches = results.getInt(5);
+        final String path = results.getString(6);
+        final int start = results.getInt(7);
+        final int end = results.getInt(8);
+        final String repo = results.getString(9);
+        final String commit = results.getString(10);
+        final int id = results.getInt(11);
+        final JavaMethod method = new JavaMethod(signature, name, rtext, ntext, size, branches,
+            path, start, end, repo, commit, id);
         methods.add(method);
       }
     } catch (final SQLException e) {

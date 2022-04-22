@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ContinueStatement;
 import org.eclipse.jdt.core.dom.DoStatement;
 import org.eclipse.jdt.core.dom.EmptyStatement;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ForStatement;
@@ -53,6 +54,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 import org.eclipse.jdt.core.dom.WildcardType;
 import org.eclipse.jdt.core.dom.YieldStatement;
+import org.eclipse.jdt.internal.compiler.ast.ForeachStatement;
 import org.eclipse.jgit.revwalk.RevCommit;
 import iv.IVConfig;
 import iv.data.JavaMethod;
@@ -319,7 +321,7 @@ public class JavaFileVisitor extends ASTVisitor {
     }
 
     final List<?> thrownExceptionTypes = node.thrownExceptionTypes();
-    if(null != thrownExceptionTypes && !thrownExceptionTypes.isEmpty()){
+    if (null != thrownExceptionTypes && !thrownExceptionTypes.isEmpty()) {
       return false;
     }
 
@@ -408,11 +410,12 @@ public class JavaFileVisitor extends ASTVisitor {
     // 返値，メソッド名，メソッド全体の文字列, 正規化後の文字列，パスを利用してメソッドオブジェクトを生成
     final String returnType = returnTypeOptional.map(ASTNode::toString)
         .orElse("void");
+    final int branches = getBranchNumber(statements);
     final CompilationUnit rootNode = (CompilationUnit) node.getRoot();
     final int startLine = rootNode.getLineNumber(node.getStartPosition());
     final int endLine = rootNode.getLineNumber(node.getStartPosition() + node.getLength());
     final JavaMethod method = new JavaMethod(returnType, methodName, rawText, normalizedText,
-        statements.size(), path, startLine, endLine, remoteUrl, commit);
+        statements.size(), branches, path, startLine, endLine, remoteUrl, commit);
 
     // 引数の型を追加する
     for (final SingleVariableDeclaration parameter : parameters) {
@@ -422,6 +425,15 @@ public class JavaFileVisitor extends ASTVisitor {
 
     javaMethods.add(method);
     return false;
+  }
+
+  private int getBranchNumber(final List<Statement> statements) {
+    return (int) statements.stream()
+        .filter(s -> s.getClass() == DoStatement.class || s.getClass() == ForStatement.class
+            || s.getClass() == EnhancedForStatement.class
+            || s.getClass() == IfStatement.class || s.getClass() == SwitchStatement.class
+            || s.getClass() == WhileStatement.class)
+        .count();
   }
 
   @Override
@@ -766,8 +778,9 @@ public class JavaFileVisitor extends ASTVisitor {
   public void endVisit(final ClassInstanceCreation node) {
     // もし型引数があるなら，それを取り除く
     final Type type = node.getType();
-    if(type.isParameterizedType()){
-      ((ParameterizedType)type).typeArguments().clear();
+    if (type.isParameterizedType()) {
+      ((ParameterizedType) type).typeArguments()
+          .clear();
     }
   }
 }
