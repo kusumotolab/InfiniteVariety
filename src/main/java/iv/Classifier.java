@@ -86,7 +86,8 @@ public class Classifier {
       // 指定されたシグネチャを持つメソッドの数が2つ未満の場合は何もしない
       final List<JavaMethod> methods = JavaMethodDAO.SINGLETON.getMethods(signature)
           .stream()
-          .filter(m -> 1 < m.size)
+          .filter(m -> 1 < m.size) // 文の数が2以上
+          .filter(m -> 0 < m.branches) // 分岐の数が1以上
           .collect(
               Collectors.toList());
       if (methods.size() < 2) {
